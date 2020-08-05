@@ -51,10 +51,6 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
             Log.i(TAG, "Service connected")
             val upnpService = (service as AndroidUpnpService).also { mUpnpService = it }
 
-            // Clear the list
-            elements.clear()
-            adapter.notifyDataSetChanged()
-
             // Get ready for future device advertisements
             upnpService.registry.addListener(mRegistryListener)
             findDevice()
@@ -181,10 +177,12 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
                                         arg0: ActionInvocation<*>?,
                                         didl: DIDLContent
                                     ) {
-                                        mCurrent =
-                                            VideoElement(true, mRoot, "Root", null, this@BrowseActivity)
-                                        mCurrent?.pathFromRoot = ""
-                                        parseAndUpdate(didl)
+                                        if (mCurrent == null) {
+                                            mCurrent =
+                                                VideoElement(true, mRoot, "Root", null, this@BrowseActivity)
+                                            mCurrent?.pathFromRoot = ""
+                                            parseAndUpdate(didl)
+                                        }
                                     }
 
                                     override fun updateStatus(status: Status) {
