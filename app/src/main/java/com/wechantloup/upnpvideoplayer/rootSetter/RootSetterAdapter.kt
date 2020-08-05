@@ -10,6 +10,7 @@ import androidx.annotation.LayoutRes
 import androidx.recyclerview.widget.RecyclerView
 import com.wechantloup.upnpvideoplayer.R
 import com.wechantloup.upnpvideoplayer.dataholder.DlnaElement
+import com.wechantloup.upnpvideoplayer.utils.ViewUtils.inflate
 
 class RootSetterAdapter(
     private var list: List<DlnaElement>,
@@ -63,11 +64,6 @@ class RootSetterAdapter(
         val name: TextView = view.findViewById(R.id.name)
         val layout: RelativeLayout = view.findViewById(R.id.layout)
     }
-
-    private fun ViewGroup.inflate(@LayoutRes layoutRes: Int, attachToRoot: Boolean = false): View =
-        LayoutInflater
-            .from(context)
-            .inflate(layoutRes, this, attachToRoot)
 
     fun setSelectedElement(position: Int) {
         val oldSelection = selectedElement
