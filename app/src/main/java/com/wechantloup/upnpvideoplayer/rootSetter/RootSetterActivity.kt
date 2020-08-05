@@ -17,6 +17,7 @@ import com.google.gson.Gson
 import com.wechantloup.upnpvideoplayer.R
 import com.wechantloup.upnpvideoplayer.dataholder.DlnaElement
 import com.wechantloup.upnpvideoplayer.dataholder.DlnaRoot
+import com.wechantloup.upnpvideoplayer.utils.Serializer.serialize
 import org.fourthline.cling.android.AndroidUpnpService
 import org.fourthline.cling.android.AndroidUpnpServiceImpl
 import org.fourthline.cling.model.action.ActionInvocation
@@ -80,7 +81,6 @@ class RootSetterActivity : Activity() {
 
         list = findViewById(R.id.list)
         adapter = RootSetterAdapter(mAllFiles, ::onItemClick)
-//        list.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
         list.adapter = adapter
     }
 
@@ -121,7 +121,7 @@ class RootSetterActivity : Activity() {
             element.path,
             element.maxAge
         )
-        prefs.edit().putString("ROOT", Gson().toJson(root)).apply()
+        prefs.edit().putString("ROOT", root.serialize()).apply()
     }
 
     private fun onItemClick(element: DlnaElement) {

@@ -7,10 +7,14 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.wechantloup.upnpvideoplayer.R
+import com.wechantloup.upnpvideoplayer.dataholder.DlnaElement
 import com.wechantloup.upnpvideoplayer.dataholder.VideoElement
 import com.wechantloup.upnpvideoplayer.utils.ViewUtils.inflate
 
-class BrowseAdapter(private var elements: MutableList<VideoElement>) : RecyclerView.Adapter<BrowseAdapter.ViewHolder>() {
+class BrowseAdapter(
+    private var elements: MutableList<VideoElement>,
+    private var onItemClicked: (VideoElement) -> Unit
+) : RecyclerView.Adapter<BrowseAdapter.ViewHolder>() {
 
     private var defaultBackgroundColor = Color.parseColor("#00ffffff")
     private var focusedBackgroundColor = Color.parseColor("#66ffe680")
@@ -38,6 +42,7 @@ class BrowseAdapter(private var elements: MutableList<VideoElement>) : RecyclerV
             holder.icon.setImageResource(R.drawable.mini_dossier)
         }
         holder.text.text = element.name
+        holder.itemView.setOnClickListener { onItemClicked(element) }
     }
 
     override fun getItemViewType(position: Int): Int {

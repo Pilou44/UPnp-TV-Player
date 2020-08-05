@@ -15,6 +15,7 @@ import com.google.gson.Gson
 import com.wechantloup.upnpvideoplayer.R
 import com.wechantloup.upnpvideoplayer.dataholder.DlnaRoot
 import com.wechantloup.upnpvideoplayer.dataholder.VideoElement
+import com.wechantloup.upnpvideoplayer.utils.Serializer.deserialize
 import org.fourthline.cling.android.AndroidUpnpService
 import org.fourthline.cling.android.AndroidUpnpServiceImpl
 import org.fourthline.cling.model.action.ActionInvocation
@@ -33,6 +34,7 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
 
     private lateinit var adapter: BrowseAdapter
     private lateinit var remoteService: RemoteService
+    private lateinit var list: RecyclerView
     private val elements = mutableListOf<VideoElement>()
     var mCurrent: VideoElement? = null
     private val mHandler = Handler()
@@ -51,7 +53,7 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
             adapter.notifyDataSetChanged()
 
             // Get ready for future device advertisements
-            upnpService.getRegistry().addListener(mRegistryListener)
+            upnpService.registry.addListener(mRegistryListener)
             findDevice()
         }
 
@@ -59,9 +61,6 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
             mUpnpService = null
         }
     }
-
-    fun <T> String.deserialize(clazz: Class<T>): T = Gson().fromJson(this, clazz)
-    inline fun <reified T> String.deserialize(): T = deserialize(T::class.java)
 
     private fun findDevice() {
         Log.i(TAG, "Trying to connect to DLNA server")
@@ -83,8 +82,8 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_browse)
 
-        val list: RecyclerView = findViewById(R.id.list)
-        list.adapter = BrowseAdapter(elements).also {
+        list = findViewById(R.id.list)
+        list.adapter = BrowseAdapter(elements, ::onItemClicked).also {
             adapter = it
         }
     }
@@ -111,53 +110,53 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
         }
     }
 
+    override fun onBackPressed() {
+        if (mCurrent == null || mCurrent!!.path == mRoot) {
+            super.onBackPressed()
+        } else {
+            parseAndUpdate(mCurrent!!.parent)
+        }
+    }
+
     companion object {
         private val TAG = BrowseActivity::class.java.simpleName
     }
 
     internal class BrowseRegistryListener(private var activity: BrowseActivity) : DefaultRegistryListener() {
-        override fun remoteDeviceDiscoveryStarted(
-            registry: Registry,
-            device: RemoteDevice
-        ) {
-//            deviceAdded(device)
+        override fun remoteDeviceDiscoveryStarted(registry: Registry, device: RemoteDevice) {
+            // Nothing to do
         }
 
-        override fun remoteDeviceDiscoveryFailed(
-            registry: Registry,
-            device: RemoteDevice,
-            ex: Exception
-        ) {
+        override fun remoteDeviceDiscoveryFailed(registry: Registry, device: RemoteDevice, ex: Exception) {
+            // Nothing to do
         }
 
-        override fun remoteDeviceAdded(
-            registry: Registry,
-            device: RemoteDevice
-        ) {
+        override fun remoteDeviceAdded(registry: Registry, device: RemoteDevice) {
             activity.deviceAdded(device)
         }
 
-        override fun remoteDeviceRemoved(
-            registry: Registry,
-            device: RemoteDevice
-        ) {
+        override fun remoteDeviceRemoved(registry: Registry, device: RemoteDevice) {
+            // Nothing to do
         }
 
-        override fun localDeviceAdded(
-            registry: Registry,
-            device: LocalDevice
-        ) {
-//            deviceAdded(device)
+        override fun localDeviceAdded(registry: Registry, device: LocalDevice) {
+            // Nothing to do
         }
 
-        override fun localDeviceRemoved(
-            registry: Registry,
-            device: LocalDevice
-        ) {
+        override fun localDeviceRemoved(registry: Registry, device: LocalDevice) {
+            // Nothing to do
         }
     }
 
-    fun deviceAdded(device: Device<*, *, *>) {
+    private fun onItemClicked(element: VideoElement) {
+        if (element.isDirectory) {
+            parseAndUpdate(element)
+        } else {
+            // ToDo Launch video
+        }
+    }
+
+    private fun deviceAdded(device: Device<*, *, *>) {
         if (device.type.type == "MediaServer") {
             Log.i(TAG, "Found media server")
             runOnUiThread(Runnable {
@@ -167,7 +166,7 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
                             Log.i(TAG, "ContentDirectory found")
                             remoteService = service
                             Log.i(TAG, "Browse root $mRoot")
-                            mUpnpService?.getControlPoint()
+                            mUpnpService?.controlPoint
                                 ?.execute(object : Browse(service, mRoot, BrowseFlag.DIRECT_CHILDREN) {
                                     override fun received(
                                         arg0: ActionInvocation<*>?,
@@ -175,16 +174,8 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
                                     ) {
                                         mCurrent =
                                             VideoElement(true, mRoot, "Root", null, this@BrowseActivity)
-                                        mCurrent?.setPathFromRoot("")
+                                        mCurrent?.pathFromRoot = ""
                                         parseAndUpdate(didl)
-                                        goToTop()
-//                                            mDialog.dismiss()
-//                                            Log.i(TAG, "Store last used DLNA: $mIndex")
-//                                            val edit =
-//                                                PreferenceManager.getDefaultSharedPreferences(this@BrowseDlnaActivity)
-//                                                    .edit()
-//                                            edit.putInt(getString(R.string.key_last_used_dlna), mIndex)
-//                                            edit.apply()
                                     }
 
                                     override fun updateStatus(status: Status) {
@@ -205,29 +196,14 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
         }
     }
 
-    private fun goToTop() {
-//        mHandler.post { mListView.setSelectionAfterHeaderView() }
-    }
-
-    protected fun parseAndUpdate(element: VideoElement) {
-//        mDialog = ProgressDialog.show(
-//            this,
-//            getString(R.string.dlna_progress_dialog_files_title),
-//            getString(R.string.progress_dialog_text),
-//            true,
-//            true,
-//            this
-//        )
-//        mDialog.setCanceledOnTouchOutside(false)
-        mUpnpService!!.controlPoint
-            .execute(object : Browse(remoteService, element.getPath(), BrowseFlag.DIRECT_CHILDREN) {
+    private fun parseAndUpdate(element: VideoElement) {
+        mUpnpService?.controlPoint
+            ?.execute(object : Browse(remoteService, element.path, BrowseFlag.DIRECT_CHILDREN) {
                 override fun received(
                     arg0: ActionInvocation<*>?,
                     didl: DIDLContent
                 ) {
                     parseAndUpdate(didl)
-                    goToTop()
-//                    mDialog.dismiss()
                     mCurrent = element
                 }
 
@@ -248,7 +224,7 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
                     mCurrent,
                     this
                 )
-                element.setPathFromRoot(mCurrent?.getPathFromRoot().toString() + "/" + element.getName())
+                element.pathFromRoot = mCurrent?.pathFromRoot.toString() + "/" + element.name
                 elements.add(element)
             }
             Log.i(TAG, "found " + didl.items.size + " items.")
@@ -262,13 +238,14 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
                     null
 //                    mListView
                 )
-                element.setPathFromRoot(mCurrent?.getPathFromRoot().toString() + "/" + element.getName())
+                element.pathFromRoot = mCurrent?.pathFromRoot.toString() + "/" + element.name
                 for (resource in didl.items[i].resources) {
-                    if (resource.size != null) element.setSize(resource.size)
+                    if (resource.size != null) element.size = resource.size
                 }
                 elements.add(element)
             }
             adapter.notifyDataSetChanged()
+            list.scrollToPosition(0)
         }
     }
 
