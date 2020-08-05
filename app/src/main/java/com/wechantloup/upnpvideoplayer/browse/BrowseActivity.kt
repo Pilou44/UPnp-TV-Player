@@ -12,6 +12,9 @@ import android.preference.PreferenceManager
 import android.util.Log
 import androidx.recyclerview.widget.RecyclerView
 import com.google.gson.Gson
+import com.wechantloup.upnpvideoplayer.DetailsActivity
+import com.wechantloup.upnpvideoplayer.Movie
+import com.wechantloup.upnpvideoplayer.PlaybackActivity
 import com.wechantloup.upnpvideoplayer.R
 import com.wechantloup.upnpvideoplayer.dataholder.DlnaRoot
 import com.wechantloup.upnpvideoplayer.dataholder.VideoElement
@@ -152,7 +155,13 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
         if (element.isDirectory) {
             parseAndUpdate(element)
         } else {
-            // ToDo Launch video
+            val movie = Movie(
+                title = element.name,
+                videoUrl = element.path
+            )
+            val intent = Intent(this, PlaybackActivity::class.java)
+            intent.putExtra(DetailsActivity.MOVIE, movie)
+            startActivity(intent)
         }
     }
 
