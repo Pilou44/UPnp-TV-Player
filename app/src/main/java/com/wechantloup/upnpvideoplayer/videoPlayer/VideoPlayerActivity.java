@@ -20,7 +20,7 @@ import static android.view.KeyEvent.KEYCODE_MEDIA_PAUSE;
 import static android.view.KeyEvent.KEYCODE_MEDIA_PLAY;
 import static android.view.KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE;
 
-public class VideoPlayerActivity extends Activity {
+public class VideoPlayerActivity extends Activity implements ControlsOverlay.ControlsOverlayListener {
     private static final boolean USE_TEXTURE_VIEW = false;
     private static final boolean ENABLE_SUBTITLES = true;
     public static final String EXTRA_URLS = "urls";
@@ -49,7 +49,7 @@ public class VideoPlayerActivity extends Activity {
         controls = findViewById(R.id.controls);
 
         list = getIntent().getStringArrayExtra(EXTRA_URLS);
-        index = 0;
+        index = -1;
     }
 
     @Override
@@ -59,10 +59,10 @@ public class VideoPlayerActivity extends Activity {
         } else if (keyCode == KEYCODE_MEDIA_PLAY_PAUSE ||
                 keyCode == KEYCODE_MEDIA_PLAY ||
                 keyCode == KEYCODE_MEDIA_PAUSE) {
-            onPlayPausePressed();
+            playPause();
             return true;
         } else if (!controls.isOpened) {
-            controls.show();
+            controls.show(this);
             return true;
         } else {
             controls.launchTimer();
@@ -76,14 +76,6 @@ public class VideoPlayerActivity extends Activity {
             controls.hide();
         } else {
             super.onBackPressed();
-        }
-    }
-
-    private void onPlayPausePressed() {
-        if (mMediaPlayer.isPlaying()) {
-            mMediaPlayer.pause();
-        } else {
-            mMediaPlayer.play();
         }
     }
 
@@ -113,8 +105,7 @@ public class VideoPlayerActivity extends Activity {
             public void onEvent(MediaPlayer.Event event) {
                 if (event.type == MediaPlayer.Event.Stopped) {
                     Log.i(TAG, "Video stopped");
-                    index = (index + 1) % list.length;
-                    launchNextMedia();
+                    next();
                 }
                 int newAudioTracksCount = mMediaPlayer.getAudioTracksCount();
                 if (newAudioTracksCount != audioTracksCount) {
@@ -156,15 +147,7 @@ public class VideoPlayerActivity extends Activity {
             }
         });
 
-        launchNextMedia();
-    }
-
-    private void launchNextMedia() {
-        String path = list[index];
-        final Media media = new Media(mLibVLC, Uri.parse(path));
-        mMediaPlayer.setMedia(media);
-        media.release();
-        mMediaPlayer.play();
+        next();
     }
 
     @Override
@@ -173,5 +156,34 @@ public class VideoPlayerActivity extends Activity {
 
         mMediaPlayer.stop();
         mMediaPlayer.detachViews();
+    }
+
+    @Override
+    public void playPause() {
+        if (mMediaPlayer.isPlaying()) {
+            mMediaPlayer.pause();
+        } else {
+            mMediaPlayer.play();
+        }
+    }
+
+    @Override
+    public void next() {
+        index = (index + 1) % list.length;
+        String path = list[index];
+        final Media media = new Media(mLibVLC, Uri.parse(path));
+        mMediaPlayer.setMedia(media);
+        media.release();
+        mMediaPlayer.play();
+    }
+
+    @Override
+    public void previous() {
+        index = (index - 1 + list.length) % list.length;
+        String path = list[index];
+        final Media media = new Media(mLibVLC, Uri.parse(path));
+        mMediaPlayer.setMedia(media);
+        media.release();
+        mMediaPlayer.play();
     }
 }
