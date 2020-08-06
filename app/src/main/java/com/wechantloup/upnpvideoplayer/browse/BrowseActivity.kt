@@ -15,6 +15,7 @@ import com.wechantloup.upnpvideoplayer.R
 import com.wechantloup.upnpvideoplayer.dataholder.DlnaRoot
 import com.wechantloup.upnpvideoplayer.dataholder.VideoElement
 import com.wechantloup.upnpvideoplayer.utils.Serializer.deserialize
+import com.wechantloup.upnpvideoplayer.utils.Serializer.serialize
 import com.wechantloup.upnpvideoplayer.videoPlayer.VideoPlayerActivity
 import org.fourthline.cling.android.AndroidUpnpService
 import org.fourthline.cling.android.AndroidUpnpServiceImpl
@@ -148,8 +149,17 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
         if (element.isDirectory) {
             parseAndUpdate(element)
         } else {
+            val playerList = mutableListOf<VideoElement>()
+            val index = elements.indexOf(element)
+            playerList.addAll(elements.subList(index, elements.size).filter { !it.isDirectory })
+            if (index > 0) {
+                playerList.addAll(elements.subList(0, index).filter { !it.isDirectory })
+            }
+            val playerUrls = playerList.map {
+                it.path
+            }
             val intent = Intent(this, VideoPlayerActivity::class.java)
-            intent.putExtra(VideoPlayerActivity.EXTRA_URL, element.path)
+            intent.putExtra(VideoPlayerActivity.EXTRA_URLS, playerUrls.toTypedArray())
             startActivity(intent)
         }
     }

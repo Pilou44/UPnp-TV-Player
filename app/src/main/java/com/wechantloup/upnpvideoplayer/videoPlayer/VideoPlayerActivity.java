@@ -10,7 +10,6 @@ import com.wechantloup.upnpvideoplayer.R;
 
 import org.videolan.libvlc.LibVLC;
 import org.videolan.libvlc.Media;
-import org.videolan.libvlc.MediaList;
 import org.videolan.libvlc.MediaPlayer;
 import org.videolan.libvlc.util.VLCVideoLayout;
 
@@ -24,14 +23,15 @@ import static android.view.KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE;
 public class VideoPlayerActivity extends Activity {
     private static final boolean USE_TEXTURE_VIEW = false;
     private static final boolean ENABLE_SUBTITLES = true;
-    public static final String EXTRA_URL = "url";
+    public static final String EXTRA_URLS = "urls";
 
     private VLCVideoLayout mVideoLayout = null;
 
     private LibVLC mLibVLC = null;
     private MediaPlayer mMediaPlayer = null;
     private ControlsOverlay controls;
-    private Uri file;
+    private String[] list;
+    private int index;
     private static final String TAG = VideoPlayerActivity.class.getSimpleName();
 
     @Override
@@ -48,7 +48,8 @@ public class VideoPlayerActivity extends Activity {
         mVideoLayout = findViewById(R.id.video_layout);
         controls = findViewById(R.id.controls);
 
-        file = Uri.parse(getIntent().getStringExtra(EXTRA_URL));
+        list = getIntent().getStringArrayExtra(EXTRA_URLS);
+        index = 0;
     }
 
     @Override
@@ -110,8 +111,11 @@ public class VideoPlayerActivity extends Activity {
 
             @Override
             public void onEvent(MediaPlayer.Event event) {
-//                Log.i(TAG, "event " + Integer.toHexString(event.type));
-//                Log.i(TAG, "Audio tracks: " + mMediaPlayer.getAudioTracks());
+                if (event.type == MediaPlayer.Event.Stopped) {
+                    Log.i(TAG, "Video stopped");
+                    index = (index + 1) % list.length;
+                    launchNextMedia();
+                }
                 int newAudioTracksCount = mMediaPlayer.getAudioTracksCount();
                 if (newAudioTracksCount != audioTracksCount) {
                     Log.i(TAG, "Audio track count: " + mMediaPlayer.getAudioTracksCount());
@@ -152,11 +156,14 @@ public class VideoPlayerActivity extends Activity {
             }
         });
 
-        final Media media = new Media(mLibVLC, file);
+        launchNextMedia();
+    }
 
+    private void launchNextMedia() {
+        String path = list[index];
+        final Media media = new Media(mLibVLC, Uri.parse(path));
         mMediaPlayer.setMedia(media);
         media.release();
-
         mMediaPlayer.play();
     }
 
