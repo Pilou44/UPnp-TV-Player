@@ -16,6 +16,7 @@ import org.videolan.libvlc.util.VLCVideoLayout;
 
 import java.util.ArrayList;
 
+import static android.view.KeyEvent.KEYCODE_BACK;
 import static android.view.KeyEvent.KEYCODE_MEDIA_PAUSE;
 import static android.view.KeyEvent.KEYCODE_MEDIA_PLAY;
 import static android.view.KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE;
@@ -52,7 +53,9 @@ public class VideoPlayerActivity extends Activity {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KEYCODE_MEDIA_PLAY_PAUSE ||
+        if (keyCode == KEYCODE_BACK) {
+            return super.onKeyDown(keyCode, event);
+        } else if (keyCode == KEYCODE_MEDIA_PLAY_PAUSE ||
                 keyCode == KEYCODE_MEDIA_PLAY ||
                 keyCode == KEYCODE_MEDIA_PAUSE) {
             onPlayPausePressed();
@@ -63,6 +66,15 @@ public class VideoPlayerActivity extends Activity {
         } else {
             controls.launchTimer();
             return super.onKeyDown(keyCode, event);
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (controls.isOpened) {
+            controls.hide();
+        } else {
+            super.onBackPressed();
         }
     }
 
