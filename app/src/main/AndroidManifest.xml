@@ -37,6 +37,7 @@
         <activity android:name=".BrowseErrorActivity" />
         <activity android:name=".rootSetter.RootSetterActivity" />
         <activity android:name=".browse.BrowseActivity" />
+        <activity android:name=".videoPlayer.VideoPlayerActivity" />
         <service android:name="org.fourthline.cling.android.AndroidUpnpServiceImpl" />
     </application>
 

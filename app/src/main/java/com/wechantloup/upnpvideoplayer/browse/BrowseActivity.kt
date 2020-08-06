@@ -11,14 +11,11 @@ import android.os.IBinder
 import android.preference.PreferenceManager
 import android.util.Log
 import androidx.recyclerview.widget.RecyclerView
-import com.google.gson.Gson
-import com.wechantloup.upnpvideoplayer.DetailsActivity
-import com.wechantloup.upnpvideoplayer.Movie
-import com.wechantloup.upnpvideoplayer.PlaybackActivity
 import com.wechantloup.upnpvideoplayer.R
 import com.wechantloup.upnpvideoplayer.dataholder.DlnaRoot
 import com.wechantloup.upnpvideoplayer.dataholder.VideoElement
 import com.wechantloup.upnpvideoplayer.utils.Serializer.deserialize
+import com.wechantloup.upnpvideoplayer.videoPlayer.VideoPlayerActivity
 import org.fourthline.cling.android.AndroidUpnpService
 import org.fourthline.cling.android.AndroidUpnpServiceImpl
 import org.fourthline.cling.model.action.ActionInvocation
@@ -151,12 +148,8 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
         if (element.isDirectory) {
             parseAndUpdate(element)
         } else {
-            val movie = Movie(
-                title = element.name,
-                videoUrl = element.path
-            )
-            val intent = Intent(this, PlaybackActivity::class.java)
-            intent.putExtra(DetailsActivity.MOVIE, movie)
+            val intent = Intent(this, VideoPlayerActivity::class.java)
+            intent.putExtra(VideoPlayerActivity.EXTRA_URL, element.path)
             startActivity(intent)
         }
     }

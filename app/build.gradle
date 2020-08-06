@@ -37,6 +37,10 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'com.github.bumptech.glide:glide:3.8.0'
     implementation "com.google.code.gson:gson:2.8.6"
+    implementation "androidx.constraintlayout:constraintlayout:1.1.3"
+    
+    implementation 'org.videolan.android:libvlc-all:3.1.12'
+
     implementation group: 'org.eclipse.jetty', name: 'jetty-server', version: '8.2.0.v20160908'
     implementation group: 'org.eclipse.jetty', name: 'jetty-servlet', version: '8.2.0.v20160908'
     implementation group: 'org.eclipse.jetty', name: 'jetty-client', version: '8.2.0.v20160908'
