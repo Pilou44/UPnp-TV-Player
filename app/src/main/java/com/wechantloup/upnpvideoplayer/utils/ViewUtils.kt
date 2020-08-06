@@ -1,5 +1,9 @@
 package com.wechantloup.upnpvideoplayer.utils
 
+import android.app.Activity
+import android.transition.AutoTransition
+import android.transition.Transition
+import android.transition.TransitionManager
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,4 +15,22 @@ internal object ViewUtils {
         LayoutInflater
             .from(context)
             .inflate(layoutRes, this, attachToRoot)
+
+    fun View.startAnimatingConstraints(transition: Transition? = null, onCompleted: (() -> Unit)? = null) {
+        (context as? Activity)?.findViewById<ViewGroup>(android.R.id.content)?.also { rootView ->
+            TransitionManager.beginDelayedTransition(
+                rootView,
+                (transition ?: AutoTransition())
+                    .apply { duration = 150 }
+                    .apply { addListener(object : Transition.TransitionListener {
+                        override fun onTransitionEnd(transition: Transition?) { onCompleted?.invoke() }
+                        override fun onTransitionResume(transition: Transition?) {}
+                        override fun onTransitionPause(transition: Transition?) {}
+                        override fun onTransitionCancel(transition: Transition?) {}
+                        override fun onTransitionStart(transition: Transition?) {}
+                    }) }
+            )
+        }
+    }
+
 }

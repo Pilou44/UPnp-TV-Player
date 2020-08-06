@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 
 import com.wechantloup.upnpvideoplayer.R;
 
@@ -15,6 +16,10 @@ import org.videolan.libvlc.util.VLCVideoLayout;
 
 import java.util.ArrayList;
 
+import static android.view.KeyEvent.KEYCODE_MEDIA_PAUSE;
+import static android.view.KeyEvent.KEYCODE_MEDIA_PLAY;
+import static android.view.KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE;
+
 public class VideoPlayerActivity extends Activity {
     private static final boolean USE_TEXTURE_VIEW = false;
     private static final boolean ENABLE_SUBTITLES = true;
@@ -24,6 +29,7 @@ public class VideoPlayerActivity extends Activity {
 
     private LibVLC mLibVLC = null;
     private MediaPlayer mMediaPlayer = null;
+    private ControlsOverlay controls;
     private Uri file;
     private static final String TAG = VideoPlayerActivity.class.getSimpleName();
 
@@ -39,8 +45,38 @@ public class VideoPlayerActivity extends Activity {
         mMediaPlayer = new MediaPlayer(mLibVLC);
 
         mVideoLayout = findViewById(R.id.video_layout);
+        controls = findViewById(R.id.controls);
 
         file = Uri.parse(getIntent().getStringExtra(EXTRA_URL));
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KEYCODE_MEDIA_PLAY_PAUSE ||
+                keyCode == KEYCODE_MEDIA_PLAY ||
+                keyCode == KEYCODE_MEDIA_PAUSE) {
+            onPlayPausePressed();
+            return true;
+        } else if (!controls.isOpened) {
+            controls.show();
+            return true;
+        } else {
+            controls.launchTimer();
+            return super.onKeyDown(keyCode, event);
+        }
+    }
+
+    private void onPlayPausePressed() {
+        if (mMediaPlayer.isPlaying()) {
+            mMediaPlayer.pause();
+        } else {
+            mMediaPlayer.play();
+        }
+    }
+
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        return super.onKeyUp(keyCode, event);
     }
 
     @Override
