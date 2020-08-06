@@ -3,11 +3,13 @@ package com.wechantloup.upnpvideoplayer.videoPlayer;
 import android.app.Activity;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.wechantloup.upnpvideoplayer.R;
 
 import org.videolan.libvlc.LibVLC;
 import org.videolan.libvlc.Media;
+import org.videolan.libvlc.MediaList;
 import org.videolan.libvlc.MediaPlayer;
 import org.videolan.libvlc.util.VLCVideoLayout;
 
@@ -23,6 +25,7 @@ public class VideoPlayerActivity extends Activity {
     private LibVLC mLibVLC = null;
     private MediaPlayer mMediaPlayer = null;
     private Uri file;
+    private static final String TAG = VideoPlayerActivity.class.getSimpleName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,7 +56,56 @@ public class VideoPlayerActivity extends Activity {
 
         mMediaPlayer.attachViews(mVideoLayout, null, ENABLE_SUBTITLES, USE_TEXTURE_VIEW);
 
+        mMediaPlayer.setEventListener(new MediaPlayer.EventListener() {
+            private int audioTracksCount = -1;
+            private int spuTracksCount = -1;
+
+            @Override
+            public void onEvent(MediaPlayer.Event event) {
+//                Log.i(TAG, "event " + Integer.toHexString(event.type));
+//                Log.i(TAG, "Audio tracks: " + mMediaPlayer.getAudioTracks());
+                int newAudioTracksCount = mMediaPlayer.getAudioTracksCount();
+                if (newAudioTracksCount != audioTracksCount) {
+                    Log.i(TAG, "Audio track count: " + mMediaPlayer.getAudioTracksCount());
+                    audioTracksCount = newAudioTracksCount;
+                    MediaPlayer.TrackDescription[] audioTracks = mMediaPlayer.getAudioTracks();
+                    int frenchTrack = -1;
+                    if (audioTracksCount > 0) {
+                        for (MediaPlayer.TrackDescription audioTrack : audioTracks) {
+                            Log.i(TAG, "Audio track: " + audioTrack.name);
+                            Log.i(TAG, "Audio track: " + audioTrack.id);
+                            if (audioTrack.name.toLowerCase().contains("vf") || audioTrack.name.toLowerCase().contains("fr")) {
+                                frenchTrack = audioTrack.id;
+                            }
+                        }
+                    }
+                    if (frenchTrack >= 0) {
+                        Log.i(TAG, "Set french audio track: " + mMediaPlayer.setAudioTrack(frenchTrack));
+//                        mMediaPlayer.setAudioTrack(2);
+                    }
+                }
+
+                int newSpuTracks = mMediaPlayer.getSpuTracksCount();
+                if (newSpuTracks != spuTracksCount) {
+                    Log.i(TAG, "SPU track count: " + mMediaPlayer.getAudioTracksCount());
+                    spuTracksCount = newSpuTracks;
+                    MediaPlayer.TrackDescription[] spuTracks = mMediaPlayer.getSpuTracks();
+                    if (spuTracksCount > 0) {
+                        for (MediaPlayer.TrackDescription spuTrack : spuTracks) {
+                            Log.i(TAG, "SPU track: " + spuTrack.name);
+                            Log.i(TAG, "Audio track: " + spuTrack.id);
+                        }
+                    }
+                    if (spuTracksCount > 0) {
+                        Log.i(TAG, "Set spu track: " + spuTracks[0].name + " " + mMediaPlayer.setSpuTrack(spuTracks[0].id));
+//                        mMediaPlayer.setSpuTrack(0);
+                    }
+                }
+            }
+        });
+
         final Media media = new Media(mLibVLC, file);
+
         mMediaPlayer.setMedia(media);
         media.release();
 
