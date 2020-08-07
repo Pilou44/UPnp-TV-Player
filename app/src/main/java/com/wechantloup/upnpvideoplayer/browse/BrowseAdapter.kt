@@ -16,6 +16,7 @@ class BrowseAdapter(
     private var onItemClicked: (VideoElement) -> Unit
 ) : RecyclerView.Adapter<BrowseAdapter.ViewHolder>() {
 
+    private var elementToFocus: Int? = null
     private var defaultBackgroundColor = Color.parseColor("#00ffffff")
     private var focusedBackgroundColor = Color.parseColor("#66ffe680")
 
@@ -43,6 +44,10 @@ class BrowseAdapter(
         }
         holder.text.text = element.name
         holder.itemView.setOnClickListener { onItemClicked(element) }
+        if (position == elementToFocus) {
+            holder.itemView.requestFocus()
+            elementToFocus = null
+        }
     }
 
     override fun getItemViewType(position: Int): Int {
@@ -50,6 +55,11 @@ class BrowseAdapter(
             true -> TYPE_DIRECTORY
             false -> TYPE_VIDEO
         }
+    }
+
+    fun requestFocusFor(position: Int) {
+        elementToFocus = position
+        notifyItemChanged(position)
     }
 
     class ViewHolder(private val view: View) : RecyclerView.ViewHolder(view) {

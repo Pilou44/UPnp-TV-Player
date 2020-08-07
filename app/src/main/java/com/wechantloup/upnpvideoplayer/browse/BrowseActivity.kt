@@ -111,7 +111,7 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
         if (mCurrent == null || mCurrent!!.path == mRoot) {
             super.onBackPressed()
         } else {
-            parseAndUpdate(mCurrent!!.parent)
+            parseAndUpdate(mCurrent!!.parent, mCurrent)
         }
     }
 
@@ -181,10 +181,10 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
                                         didl: DIDLContent
                                     ) {
                                         if (mCurrent == null) {
-                                            mCurrent =
+                                            val current =
                                                 VideoElement(true, mRoot, "Root", null, this@BrowseActivity)
-                                            mCurrent?.pathFromRoot = ""
-                                            parseAndUpdate(didl)
+                                            current.pathFromRoot = ""
+                                            parseAndUpdate(didl, current)
                                         }
                                     }
 
@@ -206,15 +206,14 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
         }
     }
 
-    private fun parseAndUpdate(element: VideoElement) {
+    private fun parseAndUpdate(element: VideoElement, caller: VideoElement? = null) {
         mUpnpService?.controlPoint
             ?.execute(object : Browse(remoteService, element.path, BrowseFlag.DIRECT_CHILDREN) {
                 override fun received(
                     arg0: ActionInvocation<*>?,
                     didl: DIDLContent
                 ) {
-                    parseAndUpdate(didl)
-                    mCurrent = element
+                    parseAndUpdate(didl, element, caller)
                 }
 
                 override fun updateStatus(status: Status) {}
@@ -222,7 +221,7 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
             })
     }
 
-    private fun parseAndUpdate(didl: DIDLContent) {
+    private fun parseAndUpdate(didl: DIDLContent, clickedElement: VideoElement, caller: VideoElement? = null) {
         mHandler.post {
             elements.clear()
             Log.i(TAG, "found " + didl.containers.size + " items.")
@@ -231,10 +230,10 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
                     true,
                     didl.containers[i].id,
                     didl.containers[i].title,
-                    mCurrent,
+                    clickedElement,
                     this
                 )
-                element.pathFromRoot = mCurrent?.pathFromRoot.toString() + "/" + element.name
+                element.pathFromRoot = clickedElement.pathFromRoot.toString() + "/" + element.name
                 elements.add(element)
             }
             Log.i(TAG, "found " + didl.items.size + " items.")
@@ -243,19 +242,26 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
                     false,
                     didl.items[i].resources[0].value,
                     didl.items[i].title,
-                    mCurrent,
+                    clickedElement,
                     this,
                     null
 //                    mListView
                 )
-                element.pathFromRoot = mCurrent?.pathFromRoot.toString() + "/" + element.name
+                element.pathFromRoot = clickedElement.pathFromRoot.toString() + "/" + element.name
                 for (resource in didl.items[i].resources) {
                     if (resource.size != null) element.size = resource.size
                 }
                 elements.add(element)
             }
             adapter.notifyDataSetChanged()
-            list.scrollToPosition(0)
+
+            var pos = caller?.let { elements.indexOf(caller) } ?: -1
+            Log.i(TAG, "Scroll to pos $pos")
+            if (pos == -1) pos = 0
+            list.scrollToPosition(pos)
+            adapter.requestFocusFor(pos)
+
+            mCurrent = clickedElement
         }
     }
 

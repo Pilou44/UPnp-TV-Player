@@ -14,6 +14,8 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.ListView;
 
+import androidx.annotation.Nullable;
+
 import java.io.File;
 
 public class VideoElement {
@@ -252,4 +254,11 @@ public class VideoElement {
 //        mOptions = options;
 //        mImageLoader = imageLoader;
 //    }
+
+    @Override
+    public boolean equals(@Nullable Object obj) {
+        return obj instanceof VideoElement &&
+                mPath.equals(((VideoElement) obj).mPath) &&
+                mName.equals(((VideoElement) obj).mName);
+    }
 }
