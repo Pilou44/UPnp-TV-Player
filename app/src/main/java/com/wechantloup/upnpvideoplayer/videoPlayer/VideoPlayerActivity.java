@@ -1,13 +1,18 @@
 package com.wechantloup.upnpvideoplayer.videoPlayer;
 
-import android.app.Activity;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+
 import com.wechantloup.upnpvideoplayer.R;
 
+import org.jetbrains.annotations.NotNull;
 import org.videolan.libvlc.LibVLC;
 import org.videolan.libvlc.Media;
 import org.videolan.libvlc.MediaPlayer;
@@ -16,11 +21,13 @@ import org.videolan.libvlc.util.VLCVideoLayout;
 import java.util.ArrayList;
 
 import static android.view.KeyEvent.KEYCODE_BACK;
+import static android.view.KeyEvent.KEYCODE_MEDIA_FAST_FORWARD;
 import static android.view.KeyEvent.KEYCODE_MEDIA_PAUSE;
 import static android.view.KeyEvent.KEYCODE_MEDIA_PLAY;
 import static android.view.KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE;
+import static android.view.KeyEvent.KEYCODE_MEDIA_REWIND;
 
-public class VideoPlayerActivity extends Activity implements ControlsOverlay.ControlsOverlayListener {
+public class VideoPlayerActivity extends AppCompatActivity implements ControlsOverlay.ControlsOverlayListener {
     private static final boolean USE_TEXTURE_VIEW = false;
     private static final boolean ENABLE_SUBTITLES = true;
     public static final String EXTRA_URLS = "urls";
@@ -33,6 +40,9 @@ public class VideoPlayerActivity extends Activity implements ControlsOverlay.Con
     private String[] list;
     private int index;
     private static final String TAG = VideoPlayerActivity.class.getSimpleName();
+    private MutableLiveData<Long> duration = new MutableLiveData<>();
+    private MutableLiveData<Long> time = new MutableLiveData<>();
+    private MutableLiveData<Float> progress = new MutableLiveData<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +64,7 @@ public class VideoPlayerActivity extends Activity implements ControlsOverlay.Con
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
+        Log.i(TAG, "Key down, code=" + keyCode);
         if (keyCode == KEYCODE_BACK) {
             return super.onKeyDown(keyCode, event);
         } else if (keyCode == KEYCODE_MEDIA_PLAY_PAUSE ||
@@ -106,6 +117,15 @@ public class VideoPlayerActivity extends Activity implements ControlsOverlay.Con
                 if (event.type == MediaPlayer.Event.Stopped) {
                     Log.i(TAG, "Video stopped");
                     next();
+                } else if (event.type == MediaPlayer.Event.LengthChanged) {
+                    Log.i(TAG, "LengthChanged event");
+                    duration.setValue(event.getLengthChanged());
+                } else if (event.type == MediaPlayer.Event.TimeChanged) {
+                    Log.i(TAG, "TimeChanged event");
+                    time.setValue(event.getTimeChanged());
+                } else if (event.type == MediaPlayer.Event.PositionChanged) {
+                    Log.i(TAG, "PositionChanged event " + event.getPositionChanged());
+                    progress.setValue(event.getPositionChanged());
                 }
                 int newAudioTracksCount = mMediaPlayer.getAudioTracksCount();
                 if (newAudioTracksCount != audioTracksCount) {
@@ -160,7 +180,9 @@ public class VideoPlayerActivity extends Activity implements ControlsOverlay.Con
 
     @Override
     public void playPause() {
-        if (mMediaPlayer.isPlaying()) {
+        if (mMediaPlayer.getRate() != 1) {
+            mMediaPlayer.setRate(1);
+        } else if (mMediaPlayer.isPlaying()) {
             mMediaPlayer.pause();
         } else {
             mMediaPlayer.play();
@@ -185,5 +207,35 @@ public class VideoPlayerActivity extends Activity implements ControlsOverlay.Con
         mMediaPlayer.setMedia(media);
         media.release();
         mMediaPlayer.play();
+    }
+
+    @Override
+    public void setPosition(float progress) {
+        Log.i("TEST", "setPosition " + progress);
+        mMediaPlayer.setPosition(progress);
+    }
+
+    @NotNull
+    @Override
+    public LifecycleOwner getOwner() {
+        return this;
+    }
+
+    @NotNull
+    @Override
+    public LiveData<Long> getDuration() {
+        return duration;
+    }
+
+    @NotNull
+    @Override
+    public LiveData<Float> getProgress() {
+        return progress;
+    }
+
+    @NotNull
+    @Override
+    public LiveData<Long> getTime() {
+        return time;
     }
 }

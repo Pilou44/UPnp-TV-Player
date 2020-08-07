@@ -32,12 +32,14 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".MainActivity" />
         <activity android:name=".DetailsActivity" />
         <activity android:name=".PlaybackActivity" />
         <activity android:name=".BrowseErrorActivity" />
         <activity android:name=".rootSetter.RootSetterActivity" />
         <activity android:name=".browse.BrowseActivity" />
-        <activity android:name=".videoPlayer.VideoPlayerActivity" />
+        <activity android:name=".videoPlayer.VideoPlayerActivity"
+            android:theme="@style/AppCompatTheme" />
         <service android:name="org.fourthline.cling.android.AndroidUpnpServiceImpl" />
     </application>
 
