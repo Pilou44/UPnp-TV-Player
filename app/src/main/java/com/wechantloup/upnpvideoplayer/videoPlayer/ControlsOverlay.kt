@@ -23,7 +23,7 @@ import java.util.TimerTask
 internal class ControlsOverlay @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
-) : ConstraintLayout(context, attrs) {
+) : ConstraintLayout(context, attrs), MediaSeekBar.MediaControls {
 
     private val timeFormat = SimpleDateFormat("HH:mm:ss")
     private var controlsListener: ControlsOverlayListener? = null
@@ -41,7 +41,7 @@ internal class ControlsOverlay @JvmOverloads constructor(
         content = findViewById(R.id.content)
 
         playPauseButton = findViewById(R.id.play_pause)
-        playPauseButton.setOnClickListener { controlsListener?.playPause() }
+        playPauseButton.setOnClickListener { playPause() }
         val nextButton: Button = findViewById(R.id.next)
         nextButton.setOnClickListener { controlsListener?.next() }
         val previousButton: Button = findViewById(R.id.previous)
@@ -54,6 +54,11 @@ internal class ControlsOverlay @JvmOverloads constructor(
                 controlsListener?.setPosition(progress.toFloat() / progressBar.max)
             }
         })
+    }
+
+    private fun playPause() {
+        val isPlaying = controlsListener?.isPlaying?.value ?: return
+        if (isPlaying) controlsListener?.pause() else controlsListener ?.resume()
     }
 
     fun hide() {
@@ -77,6 +82,7 @@ internal class ControlsOverlay @JvmOverloads constructor(
     fun show(listener: ControlsOverlayListener) {
         listener.apply {
             controlsListener = this
+            progressBar.bind(this@ControlsOverlay)
             val durationDate = Date()
             val progressDate = Date()
             val timeObserver = Observer<Long> { progress ->
@@ -86,7 +92,6 @@ internal class ControlsOverlay @JvmOverloads constructor(
             }
             time.observe(owner, timeObserver)
             val progressObserver = Observer<Float> { progress ->
-                Log.i("TEST", "update progress bar position")
                 progressBar.progress = (progress * progressBar.max).toInt()
             }
             progress.observe(owner, progressObserver)
@@ -130,7 +135,9 @@ internal class ControlsOverlay @JvmOverloads constructor(
         val duration: LiveData<Long>
         val progress: LiveData<Float>
         val time: LiveData<Long>
-        fun playPause()
+        val isPlaying: LiveData<Boolean>
+        fun pause()
+        fun resume()
         fun next()
         fun previous()
         fun setPosition(progress: Float)
@@ -138,5 +145,20 @@ internal class ControlsOverlay @JvmOverloads constructor(
 
     companion object {
         private val TAG = ControlsOverlay::class.java.simpleName
+    }
+
+    override val isPlaying: LiveData<Boolean>
+        get() = requireNotNull(controlsListener).isPlaying
+
+    override fun onKeyCatched() {
+        launchTimer()
+    }
+
+    override fun pause() {
+        controlsListener?.pause()
+    }
+
+    override fun resume() {
+        controlsListener?.resume()
     }
 }

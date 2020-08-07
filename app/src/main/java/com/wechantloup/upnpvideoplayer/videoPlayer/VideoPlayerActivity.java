@@ -43,6 +43,7 @@ public class VideoPlayerActivity extends AppCompatActivity implements ControlsOv
     private MutableLiveData<Long> duration = new MutableLiveData<>();
     private MutableLiveData<Long> time = new MutableLiveData<>();
     private MutableLiveData<Float> progress = new MutableLiveData<>();
+    private MutableLiveData<Boolean> isPlaying = new MutableLiveData<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,7 +71,11 @@ public class VideoPlayerActivity extends AppCompatActivity implements ControlsOv
         } else if (keyCode == KEYCODE_MEDIA_PLAY_PAUSE ||
                 keyCode == KEYCODE_MEDIA_PLAY ||
                 keyCode == KEYCODE_MEDIA_PAUSE) {
-            playPause();
+            if (isPlaying.getValue()) {
+                pause();
+            } else {
+                resume();
+            }
             return true;
         } else if (!controls.isOpened) {
             controls.show(this);
@@ -117,6 +122,10 @@ public class VideoPlayerActivity extends AppCompatActivity implements ControlsOv
                 if (event.type == MediaPlayer.Event.Stopped) {
                     Log.i(TAG, "Video stopped");
                     next();
+                } else if (event.type == MediaPlayer.Event.Playing) {
+                    isPlaying.setValue(true);
+                } else if (event.type == MediaPlayer.Event.Paused) {
+                    isPlaying.setValue(false);
                 } else if (event.type == MediaPlayer.Event.LengthChanged) {
                     Log.i(TAG, "LengthChanged event");
                     duration.setValue(event.getLengthChanged());
@@ -179,17 +188,6 @@ public class VideoPlayerActivity extends AppCompatActivity implements ControlsOv
     }
 
     @Override
-    public void playPause() {
-        if (mMediaPlayer.getRate() != 1) {
-            mMediaPlayer.setRate(1);
-        } else if (mMediaPlayer.isPlaying()) {
-            mMediaPlayer.pause();
-        } else {
-            mMediaPlayer.play();
-        }
-    }
-
-    @Override
     public void next() {
         index = (index + 1) % list.length;
         String path = list[index];
@@ -211,7 +209,6 @@ public class VideoPlayerActivity extends AppCompatActivity implements ControlsOv
 
     @Override
     public void setPosition(float progress) {
-        Log.i("TEST", "setPosition " + progress);
         mMediaPlayer.setPosition(progress);
     }
 
@@ -237,5 +234,21 @@ public class VideoPlayerActivity extends AppCompatActivity implements ControlsOv
     @Override
     public LiveData<Long> getTime() {
         return time;
+    }
+
+    @NotNull
+    @Override
+    public LiveData<Boolean> isPlaying() {
+        return isPlaying;
+    }
+
+    @Override
+    public void pause() {
+        mMediaPlayer.pause();
+    }
+
+    @Override
+    public void resume() {
+        mMediaPlayer.play();
     }
 }
