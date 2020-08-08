@@ -3,7 +3,6 @@ package com.wechantloup.upnpvideoplayer.videoPlayer
 import android.content.Context
 import android.os.Handler
 import android.util.AttributeSet
-import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
@@ -14,9 +13,10 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import com.wechantloup.upnpvideoplayer.R
 import com.wechantloup.upnpvideoplayer.utils.ThreadsafeConstraintsApplier
+import com.wechantloup.upnpvideoplayer.utils.TimeUtils
 import com.wechantloup.upnpvideoplayer.utils.ViewUtils.startAnimatingConstraints
-import java.text.SimpleDateFormat
-import java.util.Date
+import java.util.Formatter
+import java.util.Locale
 import java.util.Timer
 import java.util.TimerTask
 
@@ -25,7 +25,6 @@ internal class ControlsOverlay @JvmOverloads constructor(
     attrs: AttributeSet? = null
 ) : ConstraintLayout(context, attrs), MediaSeekBar.MediaControls {
 
-    private val timeFormat = SimpleDateFormat("HH:mm:ss")
     private var controlsListener: ControlsOverlayListener? = null
     private var timer = Timer()
     private val constraintSetter = ThreadsafeConstraintsApplier()
@@ -35,6 +34,8 @@ internal class ControlsOverlay @JvmOverloads constructor(
     private val progressBar: MediaSeekBar
     private val playPauseButton: Button
     @kotlin.jvm.JvmField var isOpened: Boolean = false
+    private val mFormatBuilder: StringBuilder = StringBuilder()
+    private val mFormatter: Formatter = Formatter(mFormatBuilder, Locale.getDefault())
 
     init {
         inflate(context, R.layout.controls_overlay_layout, this)
@@ -83,12 +84,8 @@ internal class ControlsOverlay @JvmOverloads constructor(
         listener.apply {
             controlsListener = this
             progressBar.bind(this@ControlsOverlay)
-            val durationDate = Date()
-            val progressDate = Date()
             val timeObserver = Observer<Long> { progress ->
-                progressDate.time = progress
-                progressView.text = timeFormat.format(progressDate)
-
+                progressView.text = TimeUtils.getStringForTime(mFormatBuilder, mFormatter, progress)
             }
             time.observe(owner, timeObserver)
             val progressObserver = Observer<Float> { progress ->
@@ -96,8 +93,7 @@ internal class ControlsOverlay @JvmOverloads constructor(
             }
             progress.observe(owner, progressObserver)
             val durationObserver = Observer<Long> { duration ->
-                durationDate.time = duration
-                durationView.text = timeFormat.format(durationDate)
+                durationView.text = TimeUtils.getStringForTime(mFormatBuilder, mFormatter, duration)
             }
             duration.observe(owner, durationObserver)
         }

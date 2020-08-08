@@ -130,7 +130,7 @@ public class VideoPlayerActivity extends AppCompatActivity implements ControlsOv
                     Log.i(TAG, "LengthChanged event");
                     duration.setValue(event.getLengthChanged());
                 } else if (event.type == MediaPlayer.Event.TimeChanged) {
-                    Log.i(TAG, "TimeChanged event");
+                    Log.i(TAG, "TimeChanged event " + event.getTimeChanged());
                     time.setValue(event.getTimeChanged());
                 } else if (event.type == MediaPlayer.Event.PositionChanged) {
                     Log.i(TAG, "PositionChanged event " + event.getPositionChanged());
