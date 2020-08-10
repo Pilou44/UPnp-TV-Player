@@ -10,12 +10,13 @@
         android:id="@+id/video_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fitsSystemWindows="false"/>
+        android:fitsSystemWindows="false"
+        android:focusable="false"/>
 
     <com.wechantloup.upnpvideoplayer.videoPlayer.ControlsOverlay
         android:id="@+id/controls"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"/>
+        android:layout_gravity="bottom" />
 
 </FrameLayout>

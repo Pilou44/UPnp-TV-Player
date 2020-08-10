@@ -1,5 +1,20 @@
 <resources>
 
     <style name="AppTheme" parent="@style/Theme.Leanback" />
-    <style name="AppCompatTheme" parent="Theme.AppCompat.NoActionBar" />
+    <style name="AppCompatTheme" parent="Theme.MaterialComponents.NoActionBar" />
+
+    <style name="MediaControlerButton" parent="Widget.MaterialComponents.Button.UnelevatedButton">
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:layout_height">64dp</item>
+        <item name="android:layout_width">64dp</item>
+        <item name="android:minWidth">64dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingTop">16dp</item>
+        <item name="android:paddingBottom">16dp</item>
+        <item name="iconSize">32dp</item>
+        <item name="cornerRadius">32dp</item>
+        <item name="backgroundTint">@color/selected_background</item>
+    </style>
 </resources>

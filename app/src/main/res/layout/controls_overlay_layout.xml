@@ -7,67 +7,71 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/content"
         android:layout_width="match_parent"
-        android:layout_height="150dp"
+        android:layout_height="wrap_content"
         android:background="@color/controls_background"
+        android:padding="@dimen/global_margin"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="parent" >
+        app:layout_constraintTop_toBottomOf="parent">
 
-        <Button
+        <com.google.android.material.button.MaterialButton
+            style="@style/MediaControlerButton"
             android:id="@+id/play_pause"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="PLAY/PAUSE"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:icon="@drawable/ic_play"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+            app:layout_constraintTop_toTopOf="parent" />
 
         <Button
             android:id="@+id/previous"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/global_margin"
             android:text="PREVIOUS"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/play_pause"/>
+            app:layout_constraintBottom_toBottomOf="@id/play_pause"
+            app:layout_constraintEnd_toStartOf="@id/play_pause"
+            app:layout_constraintTop_toTopOf="@id/play_pause" />
 
         <Button
             android:id="@+id/next"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/global_margin"
             android:text="NEXT"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@id/play_pause"/>
+            app:layout_constraintBottom_toBottomOf="@id/play_pause"
+            app:layout_constraintStart_toEndOf="@id/play_pause"
+            app:layout_constraintTop_toTopOf="@id/play_pause" />
 
         <com.wechantloup.upnpvideoplayer.videoPlayer.MediaSeekBar
             android:id="@+id/progress_bar"
             style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/half_margin"
             android:indeterminate="false"
-            app:layout_constraintTop_toBottomOf="@id/play_pause"
+            android:max="1000000"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@id/progress"
             app:layout_constraintEnd_toStartOf="@id/duration"
-            android:max="1000000"/>
+            app:layout_constraintStart_toEndOf="@id/progress"
+            app:layout_constraintTop_toBottomOf="@id/play_pause" />
 
         <TextView
             android:id="@+id/duration"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:layout_constraintTop_toTopOf="@id/progress_bar"
+            android:layout_marginStart="@dimen/half_margin"
             app:layout_constraintBottom_toBottomOf="@id/progress_bar"
-            app:layout_constraintEnd_toEndOf="parent"/>
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/progress_bar" />
 
         <TextView
             android:id="@+id/progress"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:layout_constraintTop_toTopOf="@id/progress_bar"
+            android:layout_marginEnd="@dimen/half_margin"
             app:layout_constraintBottom_toBottomOf="@id/progress_bar"
-            app:layout_constraintStart_toStartOf="parent"/>
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@id/progress_bar" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

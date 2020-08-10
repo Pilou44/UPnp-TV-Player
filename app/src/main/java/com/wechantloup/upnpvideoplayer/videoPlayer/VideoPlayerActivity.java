@@ -21,11 +21,9 @@ import org.videolan.libvlc.util.VLCVideoLayout;
 import java.util.ArrayList;
 
 import static android.view.KeyEvent.KEYCODE_BACK;
-import static android.view.KeyEvent.KEYCODE_MEDIA_FAST_FORWARD;
 import static android.view.KeyEvent.KEYCODE_MEDIA_PAUSE;
 import static android.view.KeyEvent.KEYCODE_MEDIA_PLAY;
 import static android.view.KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE;
-import static android.view.KeyEvent.KEYCODE_MEDIA_REWIND;
 
 public class VideoPlayerActivity extends AppCompatActivity implements ControlsOverlay.ControlsOverlayListener {
     private static final boolean USE_TEXTURE_VIEW = false;
@@ -58,7 +56,6 @@ public class VideoPlayerActivity extends AppCompatActivity implements ControlsOv
 
         mVideoLayout = findViewById(R.id.video_layout);
         controls = findViewById(R.id.controls);
-
         list = getIntent().getStringArrayExtra(EXTRA_URLS);
         index = -1;
     }
@@ -112,7 +109,6 @@ public class VideoPlayerActivity extends AppCompatActivity implements ControlsOv
         super.onStart();
 
         mMediaPlayer.attachViews(mVideoLayout, null, ENABLE_SUBTITLES, USE_TEXTURE_VIEW);
-
         mMediaPlayer.setEventListener(new MediaPlayer.EventListener() {
             private int audioTracksCount = -1;
             private int spuTracksCount = -1;
@@ -127,13 +123,13 @@ public class VideoPlayerActivity extends AppCompatActivity implements ControlsOv
                 } else if (event.type == MediaPlayer.Event.Paused) {
                     isPlaying.setValue(false);
                 } else if (event.type == MediaPlayer.Event.LengthChanged) {
-                    Log.i(TAG, "LengthChanged event");
+//                    Log.i(TAG, "LengthChanged event");
                     duration.setValue(event.getLengthChanged());
                 } else if (event.type == MediaPlayer.Event.TimeChanged) {
-                    Log.i(TAG, "TimeChanged event " + event.getTimeChanged());
+//                    Log.i(TAG, "TimeChanged event " + event.getTimeChanged());
                     time.setValue(event.getTimeChanged());
                 } else if (event.type == MediaPlayer.Event.PositionChanged) {
-                    Log.i(TAG, "PositionChanged event " + event.getPositionChanged());
+//                    Log.i(TAG, "PositionChanged event " + event.getPositionChanged());
                     progress.setValue(event.getPositionChanged());
                 }
                 int newAudioTracksCount = mMediaPlayer.getAudioTracksCount();
