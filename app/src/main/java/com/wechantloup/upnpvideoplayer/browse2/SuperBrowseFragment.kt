@@ -408,10 +408,10 @@ class SuperBrowseFragment : BrowseFragment(), RetrieveDeviceThreadListener {
 //                for (j in 0 until NUM_COLS) {
                     listRowAdapter.add(element)
 //                }
-                val header = HeaderItem(i.toLong(), MovieList.MOVIE_CATEGORY[1])
-                rowsAdapter.add(ListRow(header, listRowAdapter))
 //                elements.add(element)
             }
+            val header = HeaderItem(1.toLong(), MovieList.MOVIE_CATEGORY[1])
+            rowsAdapter.add(ListRow(header, listRowAdapter))
             Log.i(TAG, "found " + didl.items.size + " items.")
             for (i in didl.items.indices) {
                 val element = VideoElement(
