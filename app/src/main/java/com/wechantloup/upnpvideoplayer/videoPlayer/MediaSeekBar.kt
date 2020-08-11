@@ -48,7 +48,7 @@ class MediaSeekBar(
         when (keyCode) {
             KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_MINUS, KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_PLUS, KeyEvent.KEYCODE_EQUALS -> {
                 isPlaying?.let {
-                    controls.resume()
+                    if (it) controls.resume()
                     isPlaying = null
                 }
                 controls.onKeyCatched()

@@ -22,22 +22,20 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
+            style="@style/MediaControlerButton"
             android:id="@+id/previous"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            app:icon="@drawable/ic_previous"
             android:layout_marginEnd="@dimen/global_margin"
-            android:text="PREVIOUS"
             app:layout_constraintBottom_toBottomOf="@id/play_pause"
             app:layout_constraintEnd_toStartOf="@id/play_pause"
             app:layout_constraintTop_toTopOf="@id/play_pause" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
+            style="@style/MediaControlerButton"
             android:id="@+id/next"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            app:icon="@drawable/ic_next"
             android:layout_marginStart="@dimen/global_margin"
-            android:text="NEXT"
             app:layout_constraintBottom_toBottomOf="@id/play_pause"
             app:layout_constraintStart_toEndOf="@id/play_pause"
             app:layout_constraintTop_toTopOf="@id/play_pause" />

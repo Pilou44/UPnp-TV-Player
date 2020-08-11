@@ -11,6 +11,7 @@ import androidx.constraintlayout.widget.ConstraintSet
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
+import com.google.android.material.button.MaterialButton
 import com.wechantloup.upnpvideoplayer.R
 import com.wechantloup.upnpvideoplayer.utils.ThreadsafeConstraintsApplier
 import com.wechantloup.upnpvideoplayer.utils.TimeUtils
@@ -32,7 +33,7 @@ internal class ControlsOverlay @JvmOverloads constructor(
     private val progressView: TextView
     private val durationView: TextView
     private val progressBar: MediaSeekBar
-    private val playPauseButton: Button
+    private val playPauseButton: MaterialButton
     @kotlin.jvm.JvmField var isOpened: Boolean = false
     private val mFormatBuilder: StringBuilder = StringBuilder()
     private val mFormatter: Formatter = Formatter(mFormatBuilder, Locale.getDefault())
@@ -96,6 +97,14 @@ internal class ControlsOverlay @JvmOverloads constructor(
                 durationView.text = TimeUtils.getStringForTime(mFormatBuilder, mFormatter, duration)
             }
             duration.observe(owner, durationObserver)
+            val playStateObserver = Observer<Boolean> { isPlaying ->
+                if (isPlaying) {
+                    playPauseButton.setIconResource(R.drawable.ic_pause)
+                } else {
+                    playPauseButton.setIconResource(R.drawable.ic_play)
+                }
+            }
+            isPlaying.observe(owner, playStateObserver);
         }
         progressBar.isFocusable = true
 
