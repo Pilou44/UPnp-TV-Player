@@ -40,7 +40,7 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
     private lateinit var adapter: BrowseAdapter
     private lateinit var remoteService: RemoteService
     private lateinit var list: RecyclerView
-    private val elements = mutableListOf<VideoElement>()
+    private val elements = mutableListOf<Any>()
     var mCurrent: VideoElement? = null
     private val mHandler = Handler()
     var mRoot = "root"
@@ -121,6 +121,7 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
         if (mCurrent == null || mCurrent!!.path == mRoot) {
             super.onBackPressed()
         } else {
+            Log.i(TAG, "Back to ${mCurrent?.name}")
             parseAndUpdate(mCurrent!!.parent, mCurrent)
         }
     }
@@ -159,11 +160,12 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
         if (element.isDirectory) {
             parseAndUpdate(element)
         } else {
+            val videoList = elements.filterIsInstance<VideoElement>().filter { !it.isDirectory }
             val playerList = mutableListOf<VideoElement>()
-            val index = elements.indexOf(element)
-            playerList.addAll(elements.subList(index, elements.size).filter { !it.isDirectory })
+            val index = videoList.indexOf(element)
+            playerList.addAll(videoList.subList(index, elements.size))
             if (index > 0) {
-                playerList.addAll(elements.subList(0, index).filter { !it.isDirectory })
+                playerList.addAll(videoList.subList(0, index))
             }
             val playerUrls = playerList.map {
                 it.path
@@ -223,6 +225,7 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
                     arg0: ActionInvocation<*>?,
                     didl: DIDLContent
                 ) {
+                    Log.i(TAG, "Parse ${caller?.name}")
                     parseAndUpdate(didl, element, caller)
                 }
 
@@ -234,7 +237,10 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
     private fun parseAndUpdate(didl: DIDLContent, clickedElement: VideoElement, caller: VideoElement? = null) {
         mHandler.post {
             elements.clear()
-            Log.i(TAG, "found " + didl.containers.size + " items.")
+            Log.i(TAG, "found " + didl.containers.size + " directories.")
+            if (didl.containers.isNotEmpty()) {
+                elements.add("Dossiers")
+            }
             for (i in didl.containers.indices) {
                 val element = VideoElement(
                     true,
@@ -246,7 +252,10 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
                 element.pathFromRoot = clickedElement.pathFromRoot.toString() + "/" + element.name
                 elements.add(element)
             }
-            Log.i(TAG, "found " + didl.items.size + " items.")
+            Log.i(TAG, "found " + didl.items.size + " videos.")
+            if (didl.items.isNotEmpty()) {
+                elements.add("Videos")
+            }
             for (i in didl.items.indices) {
                 val element = VideoElement(
                     false,
@@ -263,13 +272,19 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
                 }
                 elements.add(element)
             }
-            adapter.notifyDataSetChanged()
 
-            var pos = caller?.let { elements.indexOf(caller) } ?: -1
-            Log.i(TAG, "Scroll to pos $pos")
-            if (pos == -1) pos = 0
-            list.scrollToPosition(pos)
-            adapter.requestFocusFor(pos)
+            Log.i(TAG, "parseAndUpdate caller = ${caller?.name}")
+            adapter.registerAdapterDataObserver(object: RecyclerView.AdapterDataObserver(){
+                override fun onChanged() {
+                    val pos = caller?.let { elements.indexOf(caller) } ?: -1
+                    if (pos >=0) {
+                        list.scrollToPosition(pos)
+                        adapter.requestFocusFor(pos)
+                    }
+                    adapter.unregisterAdapterDataObserver(this)
+                }
+            })
+            adapter.notifyDataSetChanged()
 
             mCurrent = clickedElement
         }

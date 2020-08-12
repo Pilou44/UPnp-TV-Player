@@ -1,6 +1,7 @@
 package com.wechantloup.upnpvideoplayer.browse
 
 import android.graphics.Color
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -12,7 +13,7 @@ import com.wechantloup.upnpvideoplayer.dataholder.VideoElement
 import com.wechantloup.upnpvideoplayer.utils.ViewUtils.inflate
 
 class BrowseAdapter(
-    private var elements: MutableList<VideoElement>,
+    private var elements: List<Any>,
     private var onItemClicked: (VideoElement) -> Unit
 ) : RecyclerView.Adapter<BrowseAdapter.ViewHolder>() {
 
@@ -21,6 +22,11 @@ class BrowseAdapter(
     private var focusedBackgroundColor = Color.parseColor("#66ffe680")
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        if (viewType == TYPE_TITLE) {
+            val view = parent.inflate(R.layout.item_title)
+            return ViewHolder(view)
+        }
+
         val view = parent.inflate(R.layout.item_browse_element)
         view.isFocusable = true
         view.isFocusableInTouchMode = true
@@ -38,9 +44,19 @@ class BrowseAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val element = elements[position]
+        when (val element = elements[position]) {
+            is VideoElement -> bindVideoElement(holder, element, position)
+            is String -> bindTitle(holder, element)
+        }
+    }
+
+    private fun bindTitle(holder: ViewHolder, element: String) {
+        holder.text.text = element
+    }
+
+    private fun bindVideoElement(holder: ViewHolder, element: VideoElement, position: Int) {
         if (element.isDirectory) {
-            holder.icon.setImageResource(R.drawable.mini_dossier)
+            holder.icon?.setImageResource(R.drawable.mini_dossier)
         }
         holder.text.text = element.name
         holder.itemView.setOnClickListener { onItemClicked(element) }
@@ -48,14 +64,14 @@ class BrowseAdapter(
             holder.itemView.requestFocus()
             elementToFocus = null
         }
-        val layoutParams = holder.itemView.layoutParams;
+        val layoutParams = holder.itemView.layoutParams
         (layoutParams as FlexboxLayoutManager.LayoutParams).flexBasisPercent = .16f
     }
 
     override fun getItemViewType(position: Int): Int {
-        return when (elements[position].isDirectory) {
-            true -> TYPE_DIRECTORY
-            false -> TYPE_VIDEO
+        return when (val element = elements[position]) {
+            is VideoElement -> if (element.isDirectory) TYPE_DIRECTORY else TYPE_VIDEO
+            else -> TYPE_TITLE
         }
     }
 
@@ -65,12 +81,13 @@ class BrowseAdapter(
     }
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val icon: ImageView = view.findViewById(R.id.icon)
+        val icon: ImageView? = view.findViewById(R.id.icon)
         val text: TextView = view.findViewById(R.id.name)
     }
 
     companion object {
         private const val TYPE_DIRECTORY = 0
         private const val TYPE_VIDEO = 1
+        private const val TYPE_TITLE = 2
     }
 }
