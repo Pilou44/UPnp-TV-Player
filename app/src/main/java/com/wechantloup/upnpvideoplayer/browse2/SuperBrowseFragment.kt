@@ -51,6 +51,7 @@ import com.wechantloup.upnpvideoplayer.dataholder.DlnaRoot
 import com.wechantloup.upnpvideoplayer.dataholder.VideoElement
 import com.wechantloup.upnpvideoplayer.rootSetter.RootSetterActivity
 import com.wechantloup.upnpvideoplayer.utils.Serializer.deserialize
+import com.wechantloup.upnpvideoplayer.videoPlayer.VideoPlayerActivity
 import org.fourthline.cling.android.AndroidUpnpService
 import org.fourthline.cling.android.AndroidUpnpServiceImpl
 import org.fourthline.cling.model.action.ActionInvocation
@@ -68,8 +69,10 @@ import org.fourthline.cling.support.model.DIDLContent
 /**
  * Loads a grid of cards with movies to browse.
  */
+@Suppress("DEPRECATION")
 class SuperBrowseFragment : BrowseFragment(), RetrieveDeviceThreadListener {
 
+    private val videos = mutableListOf<VideoElement>()
     private val mHandler = Handler()
     private lateinit var mBackgroundManager: BackgroundManager
     private var mDefaultBackground: Drawable? = null
@@ -182,36 +185,6 @@ class SuperBrowseFragment : BrowseFragment(), RetrieveDeviceThreadListener {
         searchAffordanceColor = ContextCompat.getColor(activity, R.color.search_opaque)
     }
 
-    private fun loadRows() {
-        val list = MovieList.list
-
-        val rowsAdapter = ArrayObjectAdapter(ListRowPresenter())
-        val cardPresenter = CardPresenter()
-
-        for (i in 0 until NUM_ROWS) {
-            if (i != 0) {
-                Collections.shuffle(list)
-            }
-            val listRowAdapter = ArrayObjectAdapter(cardPresenter)
-            for (j in 0 until NUM_COLS) {
-                listRowAdapter.add(list[j % 5])
-            }
-            val header = HeaderItem(i.toLong(), MovieList.MOVIE_CATEGORY[i])
-            rowsAdapter.add(ListRow(header, listRowAdapter))
-        }
-
-        val gridHeader = HeaderItem(NUM_ROWS.toLong(), "PREFERENCES")
-
-        val mGridPresenter = GridItemPresenter()
-        val gridRowAdapter = ArrayObjectAdapter(mGridPresenter)
-        gridRowAdapter.add(resources.getString(R.string.grid_view))
-        gridRowAdapter.add(getString(R.string.error_fragment))
-        gridRowAdapter.add(resources.getString(R.string.personal_settings))
-        rowsAdapter.add(ListRow(gridHeader, gridRowAdapter))
-
-        adapter = rowsAdapter
-    }
-
     private fun setupEventListeners() {
         setOnSearchClickedListener {
             val intent = Intent(activity, RootSetterActivity::class.java)
@@ -232,6 +205,24 @@ class SuperBrowseFragment : BrowseFragment(), RetrieveDeviceThreadListener {
             row: Row
         ) {
 
+            if (item is VideoElement) {
+                if (item.isDirectory) {
+                    parseAndUpdate(item)
+                } else {
+                    val playerList = mutableListOf<VideoElement>()
+                    val index = videos.indexOf(item)
+                    playerList.addAll(videos.subList(index, videos.size).filter { !it.isDirectory })
+                    if (index > 0) {
+                        playerList.addAll(videos.subList(0, index).filter { !it.isDirectory })
+                    }
+                    val playerUrls = playerList.map {
+                        it.path
+                    }
+                    val intent = Intent(activity, VideoPlayerActivity::class.java)
+                    intent.putExtra(VideoPlayerActivity.EXTRA_URLS, playerUrls.toTypedArray())
+                    startActivity(intent)
+                }
+            }
             if (item is Movie) {
                 Log.d(TAG, "Item: " + item.toString())
                 val intent = Intent(activity, DetailsActivity::class.java)
@@ -386,13 +377,28 @@ class SuperBrowseFragment : BrowseFragment(), RetrieveDeviceThreadListener {
         }
     }
 
+    private fun parseAndUpdate(element: VideoElement, caller: VideoElement? = null) {
+        mUpnpService?.controlPoint
+            ?.execute(object : Browse(remoteService, element.path, BrowseFlag.DIRECT_CHILDREN) {
+                override fun received(
+                    arg0: ActionInvocation<*>?,
+                    didl: DIDLContent
+                ) {
+                    parseAndUpdate(didl, element, caller)
+                }
+
+                override fun updateStatus(status: Status) {}
+                override fun failure(arg0: ActionInvocation<*>?, arg1: UpnpResponse, arg2: String) {}
+            })
+    }
+
     private fun parseAndUpdate(didl: DIDLContent, clickedElement: VideoElement, caller: VideoElement? = null) {
         mHandler.post {
             val rowsAdapter = ArrayObjectAdapter(ListRowPresenter())
             val cardPresenter = CardPresenter()
-//            elements.clear()
 
-            val listRowAdapter = ArrayObjectAdapter(cardPresenter)
+            val directoryHeader = HeaderItem(1.toLong(), MovieList.MOVIE_CATEGORY[1])
+            val directoryListRowAdapter = ArrayObjectAdapter(cardPresenter)
             Log.i(TAG, "found " + didl.containers.size + " items.")
             for (i in didl.containers.indices) {
                 val element = VideoElement(
@@ -404,14 +410,15 @@ class SuperBrowseFragment : BrowseFragment(), RetrieveDeviceThreadListener {
                 )
 
                 element.pathFromRoot = clickedElement.pathFromRoot.toString() + "/" + element.name
-//                val listRowAdapter = ArrayObjectAdapter(cardPresenter)
-//                for (j in 0 until NUM_COLS) {
-                    listRowAdapter.add(element)
-//                }
-//                elements.add(element)
+                directoryListRowAdapter.add(element)
             }
-            val header = HeaderItem(1.toLong(), MovieList.MOVIE_CATEGORY[1])
-            rowsAdapter.add(ListRow(header, listRowAdapter))
+            if (directoryListRowAdapter.size() > 0) {
+                rowsAdapter.add(ListRow(directoryHeader, directoryListRowAdapter))
+            }
+
+            val videoHeader = HeaderItem(1.toLong(), MovieList.MOVIE_CATEGORY[2])
+            val videoListRowAdapter = ArrayObjectAdapter(cardPresenter)
+            videos.clear()
             Log.i(TAG, "found " + didl.items.size + " items.")
             for (i in didl.items.indices) {
                 val element = VideoElement(
@@ -421,21 +428,17 @@ class SuperBrowseFragment : BrowseFragment(), RetrieveDeviceThreadListener {
                     clickedElement,
                     activity,
                     null
-//                    mListView
                 )
                 element.pathFromRoot = clickedElement.pathFromRoot.toString() + "/" + element.name
                 for (resource in didl.items[i].resources) {
                     if (resource.size != null) element.size = resource.size
                 }
-//                elements.add(element)
+                videos.add(element)
+                videoListRowAdapter.add(element)
             }
-//            adapter.notifyDataSetChanged()
-
-//            var pos = caller?.let { elements.indexOf(caller) } ?: -1
-//            Log.i(TAG, "Scroll to pos $pos")
-//            if (pos == -1) pos = 0
-//            list.scrollToPosition(pos)
-//            adapter.requestFocusFor(pos)
+            if (videoListRowAdapter.size() > 0) {
+                rowsAdapter.add(ListRow(videoHeader, videoListRowAdapter))
+            }
 
             val gridHeader = HeaderItem(NUM_ROWS.toLong(), "PREFERENCES")
 
@@ -452,6 +455,14 @@ class SuperBrowseFragment : BrowseFragment(), RetrieveDeviceThreadListener {
         }
     }
 
+    fun onBackPressed() {
+        if (mCurrent == null || mCurrent!!.path == mRoot) {
+            activity.finish()
+        } else {
+            parseAndUpdate(mCurrent!!.parent, mCurrent)
+        }
+    }
+
     companion object {
         private val TAG = "SuperBrowseFragment"
 
@@ -465,6 +476,5 @@ class SuperBrowseFragment : BrowseFragment(), RetrieveDeviceThreadListener {
         private val GRID_ITEM_WIDTH = 200
         private val GRID_ITEM_HEIGHT = 200
         private val NUM_ROWS = MOVIE_CATEGORY.size
-        private val NUM_COLS = 15
     }
 }
