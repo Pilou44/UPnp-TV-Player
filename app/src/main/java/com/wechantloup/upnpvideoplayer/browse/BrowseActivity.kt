@@ -11,11 +11,15 @@ import android.os.IBinder
 import android.preference.PreferenceManager
 import android.util.Log
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.flexbox.AlignItems
+import com.google.android.flexbox.FlexDirection
+import com.google.android.flexbox.FlexWrap
+import com.google.android.flexbox.FlexboxLayoutManager
+import com.google.android.flexbox.JustifyContent
 import com.wechantloup.upnpvideoplayer.R
 import com.wechantloup.upnpvideoplayer.dataholder.DlnaRoot
 import com.wechantloup.upnpvideoplayer.dataholder.VideoElement
 import com.wechantloup.upnpvideoplayer.utils.Serializer.deserialize
-import com.wechantloup.upnpvideoplayer.utils.Serializer.serialize
 import com.wechantloup.upnpvideoplayer.videoPlayer.VideoPlayerActivity
 import org.fourthline.cling.android.AndroidUpnpService
 import org.fourthline.cling.android.AndroidUpnpServiceImpl
@@ -83,6 +87,12 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
         list.adapter = BrowseAdapter(elements, ::onItemClicked).also {
             adapter = it
         }
+        val layoutManager = FlexboxLayoutManager(this)
+        layoutManager.flexWrap = FlexWrap.WRAP
+        layoutManager.flexDirection = FlexDirection.ROW
+        layoutManager.justifyContent = JustifyContent.SPACE_AROUND
+        layoutManager.alignItems = AlignItems.FLEX_START
+        list.layoutManager = layoutManager
     }
 
     override fun onResume() {

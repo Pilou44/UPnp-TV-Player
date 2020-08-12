@@ -6,8 +6,8 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.flexbox.FlexboxLayoutManager
 import com.wechantloup.upnpvideoplayer.R
-import com.wechantloup.upnpvideoplayer.dataholder.DlnaElement
 import com.wechantloup.upnpvideoplayer.dataholder.VideoElement
 import com.wechantloup.upnpvideoplayer.utils.ViewUtils.inflate
 
@@ -48,6 +48,8 @@ class BrowseAdapter(
             holder.itemView.requestFocus()
             elementToFocus = null
         }
+        val layoutParams = holder.itemView.layoutParams;
+        (layoutParams as FlexboxLayoutManager.LayoutParams).flexBasisPercent = .16f
     }
 
     override fun getItemViewType(position: Int): Int {
@@ -62,7 +64,7 @@ class BrowseAdapter(
         notifyItemChanged(position)
     }
 
-    class ViewHolder(private val view: View) : RecyclerView.ViewHolder(view) {
+    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val icon: ImageView = view.findViewById(R.id.icon)
         val text: TextView = view.findViewById(R.id.name)
     }
