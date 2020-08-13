@@ -9,12 +9,14 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.flexbox.FlexboxLayoutManager
 import com.wechantloup.upnpvideoplayer.R
+import com.wechantloup.upnpvideoplayer.browse.BrowseActivity.Companion.NUMBER_OF_COLUMNS
 import com.wechantloup.upnpvideoplayer.dataholder.VideoElement
 import com.wechantloup.upnpvideoplayer.utils.ViewUtils.inflate
 
 class BrowseAdapter(
     private var elements: List<Any>,
-    private var onItemClicked: (VideoElement) -> Unit
+    private var onItemClicked: (VideoElement) -> Unit,
+    private var onItemSelected: (Int) -> Unit
 ) : RecyclerView.Adapter<BrowseAdapter.ViewHolder>() {
 
     private var elementToFocus: Int? = null
@@ -32,7 +34,11 @@ class BrowseAdapter(
         view.isFocusableInTouchMode = true
         view.setOnFocusChangeListener { v: View, hasFocus: Boolean ->
             when {
-                hasFocus -> v.setBackgroundColor(focusedBackgroundColor)
+                hasFocus -> {
+                    val position: Int = view.tag as Int
+                    onItemSelected(position)
+                    v.setBackgroundColor(focusedBackgroundColor)
+                }
                 else -> v.setBackgroundColor(defaultBackgroundColor)
             }
         }
@@ -44,6 +50,7 @@ class BrowseAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        holder.itemView.tag = position
         when (val element = elements[position]) {
             is VideoElement -> bindVideoElement(holder, element, position)
             is String -> bindTitle(holder, element)
@@ -65,7 +72,7 @@ class BrowseAdapter(
             elementToFocus = null
         }
         val layoutParams = holder.itemView.layoutParams
-        (layoutParams as FlexboxLayoutManager.LayoutParams).flexBasisPercent = .16f
+        (layoutParams as FlexboxLayoutManager.LayoutParams).flexBasisPercent = COLUMN_WIDTH
     }
 
     override fun getItemViewType(position: Int): Int {
@@ -89,5 +96,6 @@ class BrowseAdapter(
         private const val TYPE_DIRECTORY = 0
         private const val TYPE_VIDEO = 1
         private const val TYPE_TITLE = 2
+        private const val COLUMN_WIDTH = (100 / NUMBER_OF_COLUMNS).toFloat() / 100f
     }
 }

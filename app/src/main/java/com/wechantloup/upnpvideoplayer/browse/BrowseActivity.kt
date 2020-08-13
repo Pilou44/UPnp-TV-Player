@@ -47,6 +47,7 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
     private var bound = false
     private var mUpnpService: AndroidUpnpService? = null
     private val mRegistryListener: BrowseRegistryListener = BrowseRegistryListener(this)
+    private var previouslySelected: Int? = null
 
     private val mServiceConnection: ServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
@@ -84,7 +85,7 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
         setContentView(R.layout.activity_browse)
 
         list = findViewById(R.id.list)
-        list.adapter = BrowseAdapter(elements, ::onItemClicked).also {
+        list.adapter = BrowseAdapter(elements, ::onItemClicked, ::onItemSelected).also {
             adapter = it
         }
         val layoutManager = FlexboxLayoutManager(this)
@@ -93,6 +94,48 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
         layoutManager.justifyContent = JustifyContent.SPACE_AROUND
         layoutManager.alignItems = AlignItems.FLEX_START
         list.layoutManager = layoutManager
+    }
+
+    private fun onItemSelected(selected: Int) {
+        Log.i(TAG, "onItemSelected $selected")
+        val previous = previouslySelected
+        if (previous == null) {
+            scrollToNextLine(selected)
+            scrollToPreviousLine(selected)
+            previouslySelected = selected
+            return
+        }
+        val diff = selected - previous
+        if (diff > 0) {
+            scrollToNextLine(selected)
+        } else if (diff < 0) {
+            scrollToPreviousLine(selected)
+        }
+        previouslySelected = selected
+    }
+
+    private fun scrollToPreviousLine(selected: Int) {
+        var position = selected - NUMBER_OF_COLUMNS
+        if (position >= 0 && elements[position] !is VideoElement) {
+            position--
+        }
+        if (position < 0) {
+            position = 0
+        }
+        Log.i(TAG, "smoothScrollToPosition $position")
+        list.smoothScrollToPosition(position)
+    }
+
+    private fun scrollToNextLine(selected: Int) {
+        var position = selected + NUMBER_OF_COLUMNS
+        if (position < elements.size && elements[position] !is VideoElement) {
+            position++
+        }
+        if (position >= elements.size) {
+            position = elements.size -1
+        }
+        Log.i(TAG, "smoothScrollToPosition $position")
+        list.smoothScrollToPosition(position)
     }
 
     override fun onResume() {
@@ -128,6 +171,7 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
 
     companion object {
         private val TAG = BrowseActivity::class.java.simpleName
+        internal const val NUMBER_OF_COLUMNS = 6
     }
 
     internal class BrowseRegistryListener(private var activity: BrowseActivity) : DefaultRegistryListener() {
@@ -276,6 +320,7 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
             Log.i(TAG, "parseAndUpdate caller = ${caller?.name}")
             adapter.registerAdapterDataObserver(object: RecyclerView.AdapterDataObserver(){
                 override fun onChanged() {
+                    previouslySelected = null
                     val pos = caller?.let { elements.indexOf(caller) } ?: -1
                     if (pos >=0) {
                         list.scrollToPosition(pos)
