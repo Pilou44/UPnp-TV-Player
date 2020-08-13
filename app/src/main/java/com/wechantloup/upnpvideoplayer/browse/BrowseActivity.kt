@@ -91,7 +91,7 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
         val layoutManager = FlexboxLayoutManager(this)
         layoutManager.flexWrap = FlexWrap.WRAP
         layoutManager.flexDirection = FlexDirection.ROW
-        layoutManager.justifyContent = JustifyContent.SPACE_AROUND
+        layoutManager.justifyContent = JustifyContent.FLEX_START
         layoutManager.alignItems = AlignItems.FLEX_START
         list.layoutManager = layoutManager
     }

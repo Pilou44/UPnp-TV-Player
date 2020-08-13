@@ -6,4 +6,7 @@
     android:layout_height="wrap_content"
     android:textColor="@android:color/black"
     android:textSize="24sp"
-    android:gravity="center" />
+    android:gravity="center_vertical|start"
+    android:layout_marginStart="@dimen/global_margin"
+    android:layout_marginTop="@dimen/double_margin"
+    android:layout_marginBottom="@dimen/half_margin"/>
