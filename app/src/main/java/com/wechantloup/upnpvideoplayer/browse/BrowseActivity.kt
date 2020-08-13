@@ -10,6 +10,8 @@ import android.os.Handler
 import android.os.IBinder
 import android.preference.PreferenceManager
 import android.util.Log
+import android.view.KeyEvent
+import android.widget.Button
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.flexbox.AlignItems
 import com.google.android.flexbox.FlexDirection
@@ -85,7 +87,9 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
         setContentView(R.layout.activity_browse)
 
         list = findViewById(R.id.list)
-        list.adapter = BrowseAdapter(elements, ::onItemClicked, ::onItemSelected).also {
+        val directoriesButton: Button = findViewById(R.id.directories_button)
+        val videosButton: Button = findViewById(R.id.movies_button)
+        list.adapter = BrowseAdapter(elements, ::onItemClicked, ::onItemSelected, directoriesButton.id, videosButton.id).also {
             adapter = it
         }
         val layoutManager = FlexboxLayoutManager(this)
@@ -94,6 +98,27 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
         layoutManager.justifyContent = JustifyContent.FLEX_START
         layoutManager.alignItems = AlignItems.FLEX_START
         list.layoutManager = layoutManager
+
+        list.setOnFocusChangeListener { v, hasFocus -> Log.i(TAG, "Focus changed for ${v.id}: $hasFocus") }
+        directoriesButton.setOnFocusChangeListener { v, hasFocus -> Log.i(TAG, "Focus changed for ${v.id}: $hasFocus") }
+        videosButton.setOnFocusChangeListener { v, hasFocus -> Log.i(TAG, "Focus changed for ${v.id}: $hasFocus") }
+
+        videosButton.setOnKeyListener { v, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+                Log.i(TAG, "Go to video")
+                false
+            } else {
+                false
+            }
+        }
+        directoriesButton.setOnKeyListener { v, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+                Log.i(TAG, "Go to directories")
+                true
+            } else {
+                false
+            }
+        }
     }
 
     private fun onItemSelected(selected: Int) {
@@ -132,7 +157,7 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
             position++
         }
         if (position >= elements.size) {
-            position = elements.size -1
+            position = elements.size - 1
         }
         Log.i(TAG, "smoothScrollToPosition $position")
         list.smoothScrollToPosition(position)
@@ -247,6 +272,7 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
                                     override fun updateStatus(status: Status) {
                                         Log.i(TAG, "updateStatus")
                                     }
+
                                     override fun failure(
                                         arg0: ActionInvocation<*>?,
                                         arg1: UpnpResponse,
@@ -318,11 +344,11 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
             }
 
             Log.i(TAG, "parseAndUpdate caller = ${caller?.name}")
-            adapter.registerAdapterDataObserver(object: RecyclerView.AdapterDataObserver(){
+            adapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
                 override fun onChanged() {
                     previouslySelected = null
                     val pos = caller?.let { elements.indexOf(caller) } ?: -1
-                    if (pos >=0) {
+                    if (pos >= 0) {
                         list.scrollToPosition(pos)
                         adapter.requestFocusFor(pos)
                     }

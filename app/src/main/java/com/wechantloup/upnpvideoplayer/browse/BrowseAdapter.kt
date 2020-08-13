@@ -1,7 +1,6 @@
 package com.wechantloup.upnpvideoplayer.browse
 
 import android.graphics.Color
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -14,9 +13,11 @@ import com.wechantloup.upnpvideoplayer.dataholder.VideoElement
 import com.wechantloup.upnpvideoplayer.utils.ViewUtils.inflate
 
 class BrowseAdapter(
-    private var elements: List<Any>,
-    private var onItemClicked: (VideoElement) -> Unit,
-    private var onItemSelected: (Int) -> Unit
+    private val elements: List<Any>,
+    private val onItemClicked: (VideoElement) -> Unit,
+    private val onItemSelected: (Int) -> Unit,
+    private val directoriesButton: Int,
+    private val videosButton: Int
 ) : RecyclerView.Adapter<BrowseAdapter.ViewHolder>() {
 
     private var elementToFocus: Int? = null
@@ -62,8 +63,17 @@ class BrowseAdapter(
     }
 
     private fun bindVideoElement(holder: ViewHolder, element: VideoElement, position: Int) {
+        val directoriesList = elements.filterIsInstance<VideoElement>().filter { it.isDirectory }
+        val moviesList = elements.filterIsInstance<VideoElement>().filter { !it.isDirectory }
         if (element.isDirectory) {
             holder.icon?.setImageResource(R.drawable.mini_dossier)
+            if (directoriesList.indexOf(element) % NUMBER_OF_COLUMNS == 0) {
+                holder.itemView.nextFocusLeftId = directoriesButton
+            }
+        } else {
+            if (moviesList.indexOf(element) % NUMBER_OF_COLUMNS == 0) {
+                holder.itemView.nextFocusLeftId = videosButton
+            }
         }
         holder.text.text = element.name
         holder.itemView.setOnClickListener { onItemClicked(element) }
