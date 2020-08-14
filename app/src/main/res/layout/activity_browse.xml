@@ -36,6 +36,8 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@id/menu"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintEnd_toEndOf="parent"
+        android:descendantFocusability="beforeDescendants"
+        android:nextFocusDown="@+id/recyclerviewId"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

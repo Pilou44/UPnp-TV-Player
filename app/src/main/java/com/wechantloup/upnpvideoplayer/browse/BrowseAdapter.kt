@@ -2,6 +2,7 @@ package com.wechantloup.upnpvideoplayer.browse
 
 import android.graphics.Color
 import android.view.View
+import android.view.View.NO_ID
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
@@ -36,8 +37,8 @@ class BrowseAdapter(
         view.setOnFocusChangeListener { v: View, hasFocus: Boolean ->
             when {
                 hasFocus -> {
-                    val position: Int = view.tag as Int
-                    onItemSelected(position)
+//                    val position: Int = view.tag as Int
+//                    onItemSelected(position)
                     v.setBackgroundColor(focusedBackgroundColor)
                 }
                 else -> v.setBackgroundColor(defaultBackgroundColor)
@@ -63,18 +64,27 @@ class BrowseAdapter(
     }
 
     private fun bindVideoElement(holder: ViewHolder, element: VideoElement, position: Int) {
-        val directoriesList = elements.filterIsInstance<VideoElement>().filter { it.isDirectory }
-        val moviesList = elements.filterIsInstance<VideoElement>().filter { !it.isDirectory }
+//        val directoriesList = elements.filterIsInstance<VideoElement>().filter { it.isDirectory }
+//        val moviesList = elements.filterIsInstance<VideoElement>().filter { !it.isDirectory }
         if (element.isDirectory) {
             holder.icon?.setImageResource(R.drawable.mini_dossier)
-            if (directoriesList.indexOf(element) % NUMBER_OF_COLUMNS == 0) {
-                holder.itemView.nextFocusLeftId = directoriesButton
-            }
+//            if (directoriesList.indexOf(element) % NUMBER_OF_COLUMNS == 0) {
+//                holder.itemView.nextFocusLeftId = directoriesButton
+//            } else {
+//                holder.itemView.nextFocusLeftId = NO_ID
+//            }
         } else {
-            if (moviesList.indexOf(element) % NUMBER_OF_COLUMNS == 0) {
-                holder.itemView.nextFocusLeftId = videosButton
-            }
+//            if (moviesList.indexOf(element) % NUMBER_OF_COLUMNS == 0) {
+//                holder.itemView.nextFocusLeftId = videosButton
+//            } else {
+//                holder.itemView.nextFocusLeftId = NO_ID
+//            }
         }
+//        if (position <= NUMBER_OF_COLUMNS) {
+//            holder.itemView.nextFocusUpId = 0
+//        } else {
+//            holder.itemView.nextFocusUpId = NO_ID
+//        }
         holder.text.text = element.name
         holder.itemView.setOnClickListener { onItemClicked(element) }
         if (position == elementToFocus) {
@@ -82,7 +92,7 @@ class BrowseAdapter(
             elementToFocus = null
         }
         val layoutParams = holder.itemView.layoutParams
-        (layoutParams as FlexboxLayoutManager.LayoutParams).flexBasisPercent = COLUMN_WIDTH
+//        (layoutParams as FlexboxLayoutManager.LayoutParams).flexBasisPercent = COLUMN_WIDTH
     }
 
     override fun getItemViewType(position: Int): Int {
@@ -105,7 +115,7 @@ class BrowseAdapter(
     companion object {
         private const val TYPE_DIRECTORY = 0
         private const val TYPE_VIDEO = 1
-        private const val TYPE_TITLE = 2
+        const val TYPE_TITLE = 2
         private const val COLUMN_WIDTH = (100 / NUMBER_OF_COLUMNS).toFloat() / 100f
     }
 }

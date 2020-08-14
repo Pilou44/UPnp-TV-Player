@@ -12,6 +12,8 @@ import android.preference.PreferenceManager
 import android.util.Log
 import android.view.KeyEvent
 import android.widget.Button
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.flexbox.AlignItems
 import com.google.android.flexbox.FlexDirection
@@ -39,6 +41,8 @@ import org.fourthline.cling.support.model.DIDLContent
 
 class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
 
+//    private lateinit var layoutManager: FlexboxLayoutManager
+    private lateinit var layoutManager: GridLayoutManager
     private lateinit var adapter: BrowseAdapter
     private lateinit var remoteService: RemoteService
     private lateinit var list: RecyclerView
@@ -92,28 +96,68 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
         list.adapter = BrowseAdapter(elements, ::onItemClicked, ::onItemSelected, directoriesButton.id, videosButton.id).also {
             adapter = it
         }
-        val layoutManager = FlexboxLayoutManager(this)
-        layoutManager.flexWrap = FlexWrap.WRAP
-        layoutManager.flexDirection = FlexDirection.ROW
-        layoutManager.justifyContent = JustifyContent.FLEX_START
-        layoutManager.alignItems = AlignItems.FLEX_START
+        layoutManager = BrowserLayoutManager(this, NUMBER_OF_COLUMNS, RecyclerView.VERTICAL, false)
+//        layoutManager.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+//            override fun getSpanSize(position: Int): Int {
+//                if (adapter.getItemViewType(position) == BrowseAdapter.TYPE_TITLE)
+//                    return layoutManager.spanCount
+//                return 1
+//            }
+//        }
+//        layoutManager = FlexboxLayoutManager(this)
+//        layoutManager.flexWrap = FlexWrap.WRAP
+//        layoutManager.flexDirection = FlexDirection.ROW
+//        layoutManager.justifyContent = JustifyContent.FLEX_START
+//        layoutManager.alignItems = AlignItems.FLEX_START
         list.layoutManager = layoutManager
 
         list.setOnFocusChangeListener { v, hasFocus -> Log.i(TAG, "Focus changed for ${v.id}: $hasFocus") }
         directoriesButton.setOnFocusChangeListener { v, hasFocus -> Log.i(TAG, "Focus changed for ${v.id}: $hasFocus") }
         videosButton.setOnFocusChangeListener { v, hasFocus -> Log.i(TAG, "Focus changed for ${v.id}: $hasFocus") }
 
+        videosButton.setOnFocusChangeListener { v, hasFocus ->
+            if (hasFocus) {
+                val firstVideo: VideoElement? = elements.filterIsInstance<VideoElement>().firstOrNull { !it.isDirectory }
+                Log.i(TAG, "Scroll to video ${firstVideo?.name}")
+                firstVideo?.let {
+                    val pos = elements.indexOf(it) - 1
+                    layoutManager.scrollToPositionWithOffset(pos, 0)
+//                    list.smoothScrollToPosition(pos)
+                }
+            }
+        }
         videosButton.setOnKeyListener { v, keyCode, event ->
-            if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
-                Log.i(TAG, "Go to video")
-                false
+            if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT/* && event.action == KeyEvent.ACTION_DOWN*/) {
+                val firstVideo: VideoElement? = elements.filterIsInstance<VideoElement>().firstOrNull { !it.isDirectory }
+                Log.i(TAG, "Go to video ${firstVideo?.name}")
+                firstVideo?.let {
+                    val pos = elements.indexOf(it)
+                    adapter.requestFocusFor(pos)
+                }
+                true
             } else {
                 false
             }
         }
+        directoriesButton.setOnFocusChangeListener { v, hasFocus ->
+            if (hasFocus) {
+                val firstDir: VideoElement? = elements.filterIsInstance<VideoElement>().firstOrNull { it.isDirectory }
+                Log.i(TAG, "Scroll to dir ${firstDir?.name}")
+                firstDir?.let {
+                    val pos = elements.indexOf(it) - 1
+                    layoutManager.scrollToPositionWithOffset(pos, 0)
+//                    list.smoothScrollToPosition(pos)
+                }
+            }
+        }
         directoriesButton.setOnKeyListener { v, keyCode, event ->
-            if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
-                Log.i(TAG, "Go to directories")
+            if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT/* && event.action == KeyEvent.ACTION_DOWN*/) {
+                val firstDir: VideoElement? = elements.filterIsInstance<VideoElement>().firstOrNull { it.isDirectory }
+                Log.i(TAG, "Go to dir ${firstDir?.name}")
+                firstDir?.let {
+                    val pos = elements.indexOf(it)
+                    adapter.requestFocusFor(pos)
+                }
                 true
             } else {
                 false
@@ -122,21 +166,24 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
     }
 
     private fun onItemSelected(selected: Int) {
-        Log.i(TAG, "onItemSelected $selected")
-        val previous = previouslySelected
-        if (previous == null) {
-            scrollToNextLine(selected)
-            scrollToPreviousLine(selected)
-            previouslySelected = selected
-            return
-        }
-        val diff = selected - previous
-        if (diff > 0) {
-            scrollToNextLine(selected)
-        } else if (diff < 0) {
-            scrollToPreviousLine(selected)
-        }
-        previouslySelected = selected
+//        if (selected <= NUMBER_OF_COLUMNS) {
+//            layoutManager.scrollToPositionWithOffset(0, 0)
+//        }
+//        Log.i(TAG, "onItemSelected $selected")
+//        val previous = previouslySelected
+//        if (previous == null) {
+//            scrollToNextLine(selected)
+//            scrollToPreviousLine(selected)
+//            previouslySelected = selected
+//            return
+//        }
+//        val diff = selected - previous
+//        if (diff > 0) {
+//            scrollToNextLine(selected)
+//        } else if (diff < 0) {
+//            scrollToPreviousLine(selected)
+//        }
+//        previouslySelected = selected
     }
 
     private fun scrollToPreviousLine(selected: Int) {
@@ -308,9 +355,9 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
         mHandler.post {
             elements.clear()
             Log.i(TAG, "found " + didl.containers.size + " directories.")
-            if (didl.containers.isNotEmpty()) {
-                elements.add("Dossiers")
-            }
+//            if (didl.containers.isNotEmpty()) {
+//                elements.add("Dossiers")
+//            }
             for (i in didl.containers.indices) {
                 val element = VideoElement(
                     true,
@@ -322,10 +369,15 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
                 element.pathFromRoot = clickedElement.pathFromRoot.toString() + "/" + element.name
                 elements.add(element)
             }
-            Log.i(TAG, "found " + didl.items.size + " videos.")
-            if (didl.items.isNotEmpty()) {
-                elements.add("Videos")
+            val numberOfDirectoriesOnLastLine = didl.containers.size % NUMBER_OF_COLUMNS
+            val numberOfEmptyElements = NUMBER_OF_COLUMNS - numberOfDirectoriesOnLastLine
+            repeat (numberOfEmptyElements) {
+                elements.add("toto")
             }
+            Log.i(TAG, "found " + didl.items.size + " videos.")
+//            if (didl.items.isNotEmpty()) {
+//                elements.add("Videos")
+//            }
             for (i in didl.items.indices) {
                 val element = VideoElement(
                     false,
