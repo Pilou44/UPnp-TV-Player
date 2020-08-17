@@ -2,10 +2,6 @@ package com.wechantloup.upnpvideoplayer.browse2
 
 import android.content.ComponentName
 import android.content.Context
-import java.util.Collections
-import java.util.Timer
-import java.util.TimerTask
-
 import android.content.Intent
 import android.content.ServiceConnection
 import android.graphics.Color
@@ -14,6 +10,14 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
 import android.preference.PreferenceManager
+import android.util.DisplayMetrics
+import android.util.Log
+import android.view.Gravity
+import android.view.ViewGroup
+import android.widget.TextView
+import android.widget.Toast
+import androidx.core.app.ActivityOptionsCompat
+import androidx.core.content.ContextCompat
 import androidx.leanback.app.BackgroundManager
 import androidx.leanback.app.BrowseFragment
 import androidx.leanback.widget.ArrayObjectAdapter
@@ -21,20 +25,12 @@ import androidx.leanback.widget.HeaderItem
 import androidx.leanback.widget.ImageCardView
 import androidx.leanback.widget.ListRow
 import androidx.leanback.widget.ListRowPresenter
+import androidx.leanback.widget.ListRowPresenter.SelectItemViewHolderTask
 import androidx.leanback.widget.OnItemViewClickedListener
 import androidx.leanback.widget.OnItemViewSelectedListener
 import androidx.leanback.widget.Presenter
 import androidx.leanback.widget.Row
 import androidx.leanback.widget.RowPresenter
-import androidx.core.app.ActivityOptionsCompat
-import androidx.core.content.ContextCompat
-import android.util.DisplayMetrics
-import android.util.Log
-import android.view.Gravity
-import android.view.ViewGroup
-import android.widget.TextView
-import android.widget.Toast
-
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.drawable.GlideDrawable
 import com.bumptech.glide.request.animation.GlideAnimation
@@ -44,7 +40,6 @@ import com.wechantloup.upnpvideoplayer.DetailsActivity
 import com.wechantloup.upnpvideoplayer.Movie
 import com.wechantloup.upnpvideoplayer.MovieList
 import com.wechantloup.upnpvideoplayer.R
-import com.wechantloup.upnpvideoplayer.browse.BrowseActivity
 import com.wechantloup.upnpvideoplayer.browse.RetrieveDeviceThread
 import com.wechantloup.upnpvideoplayer.browse.RetrieveDeviceThreadListener
 import com.wechantloup.upnpvideoplayer.dataholder.DlnaRoot
@@ -65,6 +60,8 @@ import org.fourthline.cling.registry.Registry
 import org.fourthline.cling.support.contentdirectory.callback.Browse
 import org.fourthline.cling.support.model.BrowseFlag
 import org.fourthline.cling.support.model.DIDLContent
+import java.util.Timer
+import java.util.TimerTask
 
 /**
  * Loads a grid of cards with movies to browse.
@@ -394,6 +391,9 @@ class SuperBrowseFragment : BrowseFragment(), RetrieveDeviceThreadListener {
 
     private fun parseAndUpdate(didl: DIDLContent, clickedElement: VideoElement, caller: VideoElement? = null) {
         mHandler.post {
+            var row = 0
+            var selectedRow = -1
+            var selectedItem = -1
             val rowsAdapter = ArrayObjectAdapter(ListRowPresenter())
             val cardPresenter = CardPresenter()
 
@@ -411,9 +411,14 @@ class SuperBrowseFragment : BrowseFragment(), RetrieveDeviceThreadListener {
 
                 element.pathFromRoot = clickedElement.pathFromRoot.toString() + "/" + element.name
                 directoryListRowAdapter.add(element)
+                if (element == caller){
+                    selectedRow = row
+                    selectedItem = i
+                }
             }
             if (directoryListRowAdapter.size() > 0) {
                 rowsAdapter.add(ListRow(directoryHeader, directoryListRowAdapter))
+                row++
             }
 
             val videoHeader = HeaderItem(1.toLong(), MovieList.MOVIE_CATEGORY[2])
@@ -435,9 +440,13 @@ class SuperBrowseFragment : BrowseFragment(), RetrieveDeviceThreadListener {
                 }
                 videos.add(element)
                 videoListRowAdapter.add(element)
+                if (element == caller){
+                    selectedRow = row
+                    selectedItem = i
+                }
             }
             if (videoListRowAdapter.size() > 0) {
-                rowsAdapter.add(ListRow(videoHeader, videoListRowAdapter))
+                rowsAdapter.add(ListRow(/*videoHeader, */videoListRowAdapter))
             }
 
             val gridHeader = HeaderItem(NUM_ROWS.toLong(), "PREFERENCES")
@@ -450,6 +459,10 @@ class SuperBrowseFragment : BrowseFragment(), RetrieveDeviceThreadListener {
             rowsAdapter.add(ListRow(gridHeader, gridRowAdapter))
 
             adapter = rowsAdapter
+
+            if (selectedItem >= 0 && selectedRow >=0) {
+                setSelectedPosition(selectedRow, false, SelectItemViewHolderTask(selectedItem))
+            }
 
             mCurrent = clickedElement
         }
