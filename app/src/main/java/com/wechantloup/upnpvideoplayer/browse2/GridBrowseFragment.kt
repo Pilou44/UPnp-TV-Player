@@ -341,6 +341,10 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
 //            gridRowAdapter.add(resources.getString(R.string.personal_settings))
 //            rowsAdapter.add(ListRow(gridHeader, gridRowAdapter))
 
+            var pos = 0
+            caller?.let { pos = adapter.indexOf(it) }
+            setSelectedPosition(pos)
+
             this.adapter = adapter
 
 //            if (selectedItem >= 0 && selectedRow >=0) {
