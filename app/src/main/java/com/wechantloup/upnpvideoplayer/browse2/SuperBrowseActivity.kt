@@ -6,12 +6,12 @@ import com.wechantloup.upnpvideoplayer.R
 
 class SuperBrowseActivity : Activity() {
 
-    private lateinit var fragment: SuperBrowseFragment
+    private lateinit var fragment: GridBrowseFragment
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_super_browse)
-        fragment = this.fragmentManager.findFragmentById(R.id.main_browse_fragment) as SuperBrowseFragment
+        fragment = this.fragmentManager.findFragmentById(R.id.main_browse_fragment) as GridBrowseFragment
     }
 
     override fun onBackPressed() {
