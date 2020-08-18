@@ -41,6 +41,10 @@ class MainActivity : Activity() {
         }
     }
 
+    override fun onBackPressed() {
+        launchNewBrowser()
+    }
+
     private fun launchBrowser() {
         val intent = Intent(this, BrowseActivity::class.java)
         startActivity(intent)

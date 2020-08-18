@@ -17,6 +17,7 @@ import com.wechantloup.upnpvideoplayer.browse.RetrieveDeviceThread
 import com.wechantloup.upnpvideoplayer.browse.RetrieveDeviceThreadListener
 import com.wechantloup.upnpvideoplayer.dataholder.DlnaRoot
 import com.wechantloup.upnpvideoplayer.dataholder.VideoElement
+import com.wechantloup.upnpvideoplayer.main.MainActivity
 import com.wechantloup.upnpvideoplayer.utils.Serializer.deserialize
 import com.wechantloup.upnpvideoplayer.videoPlayer.VideoPlayerActivity
 import org.fourthline.cling.android.AndroidUpnpService
@@ -37,7 +38,8 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
 
     private val videos = mutableListOf<VideoElement>()
     private val mHandler = Handler()
-    var mRoot = "root"
+    var rootPath = "root"
+    var rootName = ""
     private var bound = false
     private lateinit var remoteService: RemoteService
     var mCurrent: VideoElement? = null
@@ -66,7 +68,6 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
         //        ContentContainer mContentContainer = ContentBrowser.getInstance(getActivity())
 //                                                           .getLastSelectedContentContainer();
 //        setTitle(mContentContainer.getName());
-        setTitle("Toto")
         setupFragment()
     }
 
@@ -97,7 +98,7 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
     }
 
     fun onBackPressed() {
-        if (mCurrent == null || mCurrent!!.path == mRoot) {
+        if (mCurrent == null || mCurrent!!.path == rootPath) {
             activity.finish()
         } else {
             parseAndUpdate(mCurrent!!.parent, mCurrent)
@@ -116,6 +117,12 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
 //            mAdapter.add(content);
 //        }
         setAdapter(mAdapter)
+        setOnSearchClickedListener {
+            val intent = Intent(activity, MainActivity::class.java)
+            startActivity(intent)
+            activity.finish()
+        }
+        titleView = BrowseTitleView(activity)
 
         setOnItemViewClickedListener { itemViewHolder, item, rowViewHolder, row -> onItemClicked(item) }
 
@@ -198,7 +205,8 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
         val root: DlnaRoot? = rootJson?.deserialize()
         root?.let { root ->
             Log.i(TAG, "Trying to connect")
-            mRoot = root.mPath
+            rootPath = root.mPath
+            rootName = root.mName
             val thread =
                 RetrieveDeviceThread(mUpnpService, root.mUdn, root.mUrl, root.mMaxAge, this)
             thread.start()
@@ -214,16 +222,16 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
                         if (service.serviceType.type == "ContentDirectory") {
                             Log.i(TAG, "ContentDirectory found")
                             remoteService = service
-                            Log.i(TAG, "Browse root $mRoot")
+                            Log.i(TAG, "Browse root $rootPath")
                             mUpnpService?.controlPoint
-                                ?.execute(object : Browse(service, mRoot, BrowseFlag.DIRECT_CHILDREN) {
+                                ?.execute(object : Browse(service, rootPath, BrowseFlag.DIRECT_CHILDREN) {
                                     override fun received(
                                         arg0: ActionInvocation<*>?,
                                         didl: DIDLContent
                                     ) {
                                         if (mCurrent == null) {
                                             val current =
-                                                VideoElement(true, mRoot, "Root", null, activity)
+                                                VideoElement(true, rootPath, rootName, null, activity)
                                             current.pathFromRoot = ""
                                             parseAndUpdate(didl, current)
                                         }
@@ -264,6 +272,7 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
 
     private fun parseAndUpdate(didl: DIDLContent, clickedElement: VideoElement, caller: VideoElement? = null) {
         mHandler.post {
+            title = clickedElement.name
             var row = 0
             var selectedRow = -1
             var selectedItem = -1

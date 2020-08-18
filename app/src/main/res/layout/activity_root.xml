@@ -7,13 +7,15 @@
         android:id="@+id/browse"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Browse" />
+        android:text="Browse"
+        android:visibility="gone"/>
 
     <Button
         android:id="@+id/browse2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="New Browse" />
+        android:text="New Browse"
+        android:visibility="gone" />
 
     <Button
         android:id="@+id/root"
@@ -25,5 +27,6 @@
         android:id="@+id/test"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Test" />
+        android:text="Test"
+        android:visibility="gone" />
 </LinearLayout>
