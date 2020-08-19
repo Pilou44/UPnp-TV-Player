@@ -344,6 +344,7 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
             var pos = 0
             caller?.let { pos = adapter.indexOf(it) }
             setSelectedPosition(pos)
+            showTitle(pos < NUM_COLUMNS)
 
             this.adapter = adapter
 
