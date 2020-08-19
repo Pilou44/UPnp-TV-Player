@@ -11,7 +11,6 @@ import android.preference.PreferenceManager
 import android.util.Log
 import androidx.leanback.app.VerticalGridFragment
 import androidx.leanback.widget.ArrayObjectAdapter
-import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.VerticalGridPresenter
 import com.wechantloup.upnpvideoplayer.browse.RetrieveDeviceThread
 import com.wechantloup.upnpvideoplayer.browse.RetrieveDeviceThreadListener
@@ -231,8 +230,7 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
                                     ) {
                                         if (mCurrent == null) {
                                             val current =
-                                                VideoElement(true, rootPath, rootName, null, activity)
-                                            current.pathFromRoot = ""
+                                                VideoElement(true, rootPath, rootName, null)
                                             parseAndUpdate(didl, current)
                                         }
                                     }
@@ -273,39 +271,20 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
     private fun parseAndUpdate(didl: DIDLContent, clickedElement: VideoElement, caller: VideoElement? = null) {
         mHandler.post {
             title = clickedElement.name
-            var row = 0
-            var selectedRow = -1
-            var selectedItem = -1
-            val rowsAdapter = ArrayObjectAdapter(ListRowPresenter())
-            val cardPresenter = CardPresenter()
 
             val adapter = ArrayObjectAdapter(CardPresenter())
-//            val directoryHeader = HeaderItem(1.toLong(), MovieList.MOVIE_CATEGORY[1])
-//            val directoryListRowAdapter = ArrayObjectAdapter(cardPresenter)
             Log.i(TAG, "found " + didl.containers.size + " items.")
             for (i in didl.containers.indices) {
                 val element = VideoElement(
                     true,
                     didl.containers[i].id,
                     didl.containers[i].title,
-                    clickedElement,
-                    activity
+                    clickedElement
                 )
 
-                element.pathFromRoot = clickedElement.pathFromRoot.toString() + "/" + element.name
                 adapter.add(element)
-                if (element == caller){
-                    selectedRow = row
-                    selectedItem = i
-                }
             }
-//            if (directoryListRowAdapter.size() > 0) {
-//                rowsAdapter.add(ListRow(directoryHeader, directoryListRowAdapter))
-//                row++
-//            }
 
-//            val videoHeader = HeaderItem(1.toLong(), MovieList.MOVIE_CATEGORY[2])
-//            val videoListRowAdapter = ArrayObjectAdapter(cardPresenter)
             videos.clear()
             Log.i(TAG, "found " + didl.items.size + " items.")
             for (i in didl.items.indices) {
@@ -313,33 +292,11 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
                     false,
                     didl.items[i].resources[0].value,
                     didl.items[i].title,
-                    clickedElement,
-                    activity,
-                    null
+                    clickedElement
                 )
-                element.pathFromRoot = clickedElement.pathFromRoot.toString() + "/" + element.name
-                for (resource in didl.items[i].resources) {
-                    if (resource.size != null) element.size = resource.size
-                }
                 videos.add(element)
                 adapter.add(element)
-//                if (element == caller){
-//                    selectedRow = row
-//                    selectedItem = i
-//                }
             }
-//            if (videoListRowAdapter.size() > 0) {
-//                rowsAdapter.add(ListRow(/*videoHeader, */videoListRowAdapter))
-//            }
-
-//            val gridHeader = HeaderItem(SuperBrowseFragment.NUM_ROWS.toLong(), "PREFERENCES")
-
-//            val mGridPresenter = GridItemPresenter()
-//            val gridRowAdapter = ArrayObjectAdapter(mGridPresenter)
-//            gridRowAdapter.add(resources.getString(R.string.grid_view))
-//            gridRowAdapter.add(getString(R.string.error_fragment))
-//            gridRowAdapter.add(resources.getString(R.string.personal_settings))
-//            rowsAdapter.add(ListRow(gridHeader, gridRowAdapter))
 
             var pos = 0
             caller?.let { pos = adapter.indexOf(it) }
@@ -347,10 +304,6 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
             showTitle(pos < NUM_COLUMNS)
 
             this.adapter = adapter
-
-//            if (selectedItem >= 0 && selectedRow >=0) {
-//                setSelectedPosition(selectedRow, false, ListRowPresenter.SelectItemViewHolderTask(selectedItem))
-//            }
 
             mCurrent = clickedElement
         }

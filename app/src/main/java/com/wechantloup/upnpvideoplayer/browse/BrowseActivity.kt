@@ -310,8 +310,7 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
                                     ) {
                                         if (mCurrent == null) {
                                             val current =
-                                                VideoElement(true, mRoot, "Root", null, this@BrowseActivity)
-                                            current.pathFromRoot = ""
+                                                VideoElement(true, mRoot, "Root", null)
                                             parseAndUpdate(didl, current)
                                         }
                                     }
@@ -363,10 +362,8 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
                     true,
                     didl.containers[i].id,
                     didl.containers[i].title,
-                    clickedElement,
-                    this
+                    clickedElement
                 )
-                element.pathFromRoot = clickedElement.pathFromRoot.toString() + "/" + element.name
                 elements.add(element)
             }
             val numberOfDirectoriesOnLastLine = didl.containers.size % NUMBER_OF_COLUMNS
@@ -383,15 +380,8 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
                     false,
                     didl.items[i].resources[0].value,
                     didl.items[i].title,
-                    clickedElement,
-                    this,
-                    null
-//                    mListView
+                    clickedElement
                 )
-                element.pathFromRoot = clickedElement.pathFromRoot.toString() + "/" + element.name
-                for (resource in didl.items[i].resources) {
-                    if (resource.size != null) element.size = resource.size
-                }
                 elements.add(element)
             }
 
