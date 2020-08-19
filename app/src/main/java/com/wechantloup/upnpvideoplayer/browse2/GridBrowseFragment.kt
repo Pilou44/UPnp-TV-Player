@@ -311,6 +311,6 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
 
     companion object {
         private val TAG = GridBrowseFragment::class.java.simpleName
-        private const val NUM_COLUMNS = 10
+        private const val NUM_COLUMNS = 5
     }
 }

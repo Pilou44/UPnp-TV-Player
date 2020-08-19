@@ -6,6 +6,7 @@ import androidx.leanback.widget.Presenter
 import androidx.core.content.ContextCompat
 import android.util.Log
 import android.view.ViewGroup
+import android.widget.ImageView
 
 import com.bumptech.glide.Glide
 import com.wechantloup.upnpvideoplayer.R
@@ -22,7 +23,7 @@ class CardPresenter : Presenter() {
     private var sSelectedBackgroundColor: Int by Delegates.notNull()
     private var sDefaultBackgroundColor: Int by Delegates.notNull()
 
-    override fun onCreateViewHolder(parent: ViewGroup): Presenter.ViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup): ViewHolder {
         Log.d(TAG, "onCreateViewHolder")
 
         sDefaultBackgroundColor = ContextCompat.getColor(parent.context, R.color.default_background)
@@ -39,7 +40,7 @@ class CardPresenter : Presenter() {
         cardView.isFocusable = true
         cardView.isFocusableInTouchMode = true
         updateCardBackgroundColor(cardView, false)
-        return Presenter.ViewHolder(cardView)
+        return ViewHolder(cardView)
     }
 
     override fun onBindViewHolder(viewHolder: Presenter.ViewHolder, item: Any) {
@@ -51,6 +52,12 @@ class CardPresenter : Presenter() {
             cardView.titleText = movie.name
 //            cardView.contentText = movie.studio
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
+        if (movie.isDirectory) {
+            cardView.mainImageView.apply {
+                scaleType = ImageView.ScaleType.FIT_CENTER
+                setImageResource(R.drawable.ic_directory)
+            }
+        }
 //            Glide.with(viewHolder.view.context)
 //                .load(movie.cardImageUrl)
 //                .centerCrop()
