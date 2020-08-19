@@ -18,6 +18,7 @@ import com.wechantloup.upnpvideoplayer.dataholder.DlnaRoot
 import com.wechantloup.upnpvideoplayer.dataholder.VideoElement
 import com.wechantloup.upnpvideoplayer.main.MainActivity
 import com.wechantloup.upnpvideoplayer.utils.Serializer.deserialize
+import com.wechantloup.upnpvideoplayer.utils.Serializer.serialize
 import com.wechantloup.upnpvideoplayer.videoPlayer.VideoPlayerActivity
 import org.fourthline.cling.android.AndroidUpnpService
 import org.fourthline.cling.android.AndroidUpnpServiceImpl
@@ -96,11 +97,25 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
         TODO("Not yet implemented")
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == MEDIA_PLAYER) {
+            val lastPlayedElement = data?.getParcelableExtra<VideoElement>(VideoPlayerActivity.ELEMENT)
+            lastPlayedElement?.let {
+                val pos = (adapter as ArrayObjectAdapter).indexOf(it)
+                setSelectedPosition(pos)
+                showTitle(pos < NUM_COLUMNS)
+            }
+        } else {
+            super.onActivityResult(requestCode, resultCode, data)
+        }
+    }
+
     fun onBackPressed() {
-        if (mCurrent == null || mCurrent!!.path == rootPath) {
+        val current = mCurrent
+        if (current?.parent == null) {
             activity.finish()
         } else {
-            parseAndUpdate(mCurrent!!.parent, mCurrent)
+            parseAndUpdate(current.parent, current)
         }
     }
 
@@ -124,28 +139,6 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
         titleView = BrowseTitleView(activity)
 
         setOnItemViewClickedListener { itemViewHolder, item, rowViewHolder, row -> onItemClicked(item) }
-
-//        setOnItemViewClickedListener((itemViewHolder, item, rowViewHolder, row) -> {
-//            Log.i(TAG, "item clicked: " + ((Content) item).getTitle());
-//            if (item instanceof Content) {
-//                Content content = (Content) item;
-//                Log.d(TAG, "Content with title " + content.getTitle() + " was clicked");
-//
-//                ContentBrowser.getInstance(getActivity())
-//                              .setLastSelectedContent(content)
-//                              .switchToScreen(ContentBrowser.CONTENT_DETAILS_SCREEN, content);
-//            }
-//        });
-//
-//        setOnItemViewSelectedListener((itemViewHolder, item, rowViewHolder, row) ->
-//                                              Log.i(TAG, "item selected: " +
-//                                                      ((Content) item).getTitle())
-//        );
-//
-//        setOnSearchClickedListener(view -> ContentBrowser.getInstance(
-//                                           getActivity()).switchToScreen(
-//                                           ContentBrowser.CONTENT_SEARCH_SCREEN)
-//        );
     }
 
     private fun onItemClicked(item: Any) {
@@ -159,12 +152,13 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
                 if (index > 0) {
                     playerList.addAll(videos.subList(0, index).filter { !it.isDirectory })
                 }
-                val playerUrls = playerList.map {
-                    it.path
-                }
+//                val playerUrls = playerList.map {
+//                    it.path
+//                }
                 val intent = Intent(activity, VideoPlayerActivity::class.java)
-                intent.putExtra(VideoPlayerActivity.EXTRA_URLS, playerUrls.toTypedArray())
-                startActivity(intent)
+                val list = ArrayList<VideoElement>().apply { addAll(playerList) }
+                intent.putExtra(VideoPlayerActivity.EXTRA_URLS, list)
+                startActivityForResult(intent, MEDIA_PLAYER)
             }
         }
     }
@@ -312,5 +306,6 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
     companion object {
         private val TAG = GridBrowseFragment::class.java.simpleName
         private const val NUM_COLUMNS = 5
+        private const val MEDIA_PLAYER = 2911
     }
 }

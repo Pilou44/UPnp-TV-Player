@@ -1,5 +1,6 @@
 package com.wechantloup.upnpvideoplayer.videoPlayer;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -11,6 +12,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.wechantloup.upnpvideoplayer.R;
+import com.wechantloup.upnpvideoplayer.dataholder.VideoElement;
 
 import org.jetbrains.annotations.NotNull;
 import org.videolan.libvlc.LibVLC;
@@ -26,6 +28,8 @@ import static android.view.KeyEvent.KEYCODE_MEDIA_PLAY;
 import static android.view.KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE;
 
 public class VideoPlayerActivity extends AppCompatActivity implements ControlsOverlay.ControlsOverlayListener {
+    public static final String ELEMENT = "CURRENT_ELEMENT";
+
     private static final boolean USE_TEXTURE_VIEW = false;
     private static final boolean ENABLE_SUBTITLES = true;
     public static final String EXTRA_URLS = "urls";
@@ -35,7 +39,8 @@ public class VideoPlayerActivity extends AppCompatActivity implements ControlsOv
     private LibVLC mLibVLC = null;
     private MediaPlayer mMediaPlayer = null;
     private ControlsOverlay controls;
-    private String[] list;
+    private ArrayList<VideoElement> list;
+    private VideoElement current = null;
     private int index;
     private static final String TAG = VideoPlayerActivity.class.getSimpleName();
     private MutableLiveData<Long> duration = new MutableLiveData<>();
@@ -56,7 +61,7 @@ public class VideoPlayerActivity extends AppCompatActivity implements ControlsOv
 
         mVideoLayout = findViewById(R.id.video_layout);
         controls = findViewById(R.id.controls);
-        list = getIntent().getStringArrayExtra(EXTRA_URLS);
+        list = getIntent().getParcelableArrayListExtra(EXTRA_URLS);
         index = -1;
     }
 
@@ -88,7 +93,10 @@ public class VideoPlayerActivity extends AppCompatActivity implements ControlsOv
         if (controls.isOpened) {
             controls.hide();
         } else {
-            super.onBackPressed();
+            Intent returnIntent = new Intent();
+            returnIntent.putExtra(ELEMENT, current);
+            setResult(RESULT_OK, returnIntent);
+            finish();
         }
     }
 
@@ -185,18 +193,20 @@ public class VideoPlayerActivity extends AppCompatActivity implements ControlsOv
 
     @Override
     public void next() {
-        index = (index + 1) % list.length;
-        String path = list[index];
-        final Media media = new Media(mLibVLC, Uri.parse(path));
-        mMediaPlayer.setMedia(media);
-        media.release();
-        mMediaPlayer.play();
+        index = (index + 1) % list.size();
+        current = list.get(index);
+        playCurrent();
     }
 
     @Override
     public void previous() {
-        index = (index - 1 + list.length) % list.length;
-        String path = list[index];
+        index = (index - 1 + list.size()) % list.size();
+        current = list.get(index);
+        playCurrent();
+    }
+
+    private void playCurrent() {
+        String path = current.getPath();
         final Media media = new Media(mLibVLC, Uri.parse(path));
         mMediaPlayer.setMedia(media);
         media.release();

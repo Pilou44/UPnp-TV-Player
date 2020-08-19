@@ -233,11 +233,11 @@ class BrowseActivity : Activity(), RetrieveDeviceThreadListener {
     }
 
     override fun onBackPressed() {
-        if (mCurrent == null || mCurrent!!.path == mRoot) {
+        val current = mCurrent
+        if (current?.parent == null) {
             super.onBackPressed()
         } else {
-            Log.i(TAG, "Back to ${mCurrent?.name}")
-            parseAndUpdate(mCurrent!!.parent, mCurrent)
+            parseAndUpdate(current.parent, current)
         }
     }
 
