@@ -1,12 +1,15 @@
 package com.wechantloup.upnpvideoplayer.browse2
 
 import android.graphics.drawable.Drawable
+import android.text.TextUtils
 import androidx.leanback.widget.ImageCardView
 import androidx.leanback.widget.Presenter
 import androidx.core.content.ContextCompat
 import android.util.Log
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.RelativeLayout
+import android.widget.TextView
 
 import com.bumptech.glide.Glide
 import com.wechantloup.upnpvideoplayer.R
@@ -32,10 +35,23 @@ class CardPresenter : Presenter() {
 
         val cardView = object : ImageCardView(parent.context) {
             override fun setSelected(selected: Boolean) {
+                val titleView = findViewById<TextView>(R.id.title_text)
+                if (selected) {
+                    titleView.ellipsize = TextUtils.TruncateAt.MARQUEE
+                    titleView.marqueeRepeatLimit = -1
+                    titleView.isSingleLine = true
+                } else {
+                    titleView.ellipsize = TextUtils.TruncateAt.END
+                }
+
                 updateCardBackgroundColor(this, selected)
                 super.setSelected(selected)
             }
         }
+        val titleView = cardView.findViewById<TextView>(R.id.title_text)
+        val params = titleView.layoutParams as RelativeLayout.LayoutParams
+        params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
+        titleView.layoutParams = params
 
         cardView.isFocusable = true
         cardView.isFocusableInTouchMode = true
