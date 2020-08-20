@@ -29,4 +29,16 @@
         android:layout_height="wrap_content"
         android:text="Test"
         android:visibility="gone" />
+
+    <CheckBox
+        android:id="@+id/go_next"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Lire automatiquement la video suivante"/>
+
+    <CheckBox
+        android:id="@+id/loop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Lire en boucle dans le dossier"/>
 </LinearLayout>

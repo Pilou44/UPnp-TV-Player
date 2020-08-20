@@ -1,8 +1,10 @@
 package com.wechantloup.upnpvideoplayer.videoPlayer;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.KeyEvent;
 
@@ -33,6 +35,7 @@ public class VideoPlayerActivity extends AppCompatActivity implements ControlsOv
     private static final boolean USE_TEXTURE_VIEW = false;
     private static final boolean ENABLE_SUBTITLES = true;
     public static final String EXTRA_URLS = "urls";
+    public static final String EXTRA_INDEX = "index";
 
     private VLCVideoLayout mVideoLayout = null;
 
@@ -47,12 +50,18 @@ public class VideoPlayerActivity extends AppCompatActivity implements ControlsOv
     private MutableLiveData<Long> time = new MutableLiveData<>();
     private MutableLiveData<Float> progress = new MutableLiveData<>();
     private MutableLiveData<Boolean> isPlaying = new MutableLiveData<>();
+    private boolean next;
+    private boolean loop;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_video_player);
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        loop = prefs.getBoolean("loop", false);
+        next = prefs.getBoolean("next", true);
 
         final ArrayList<String> args = new ArrayList<>();
         args.add("-vvv");
@@ -62,7 +71,7 @@ public class VideoPlayerActivity extends AppCompatActivity implements ControlsOv
         mVideoLayout = findViewById(R.id.video_layout);
         controls = findViewById(R.id.controls);
         list = getIntent().getParcelableArrayListExtra(EXTRA_URLS);
-        index = -1;
+        index = getIntent().getIntExtra(EXTRA_INDEX, 0) - 1;
     }
 
     @Override
@@ -93,11 +102,15 @@ public class VideoPlayerActivity extends AppCompatActivity implements ControlsOv
         if (controls.isOpened) {
             controls.hide();
         } else {
-            Intent returnIntent = new Intent();
-            returnIntent.putExtra(ELEMENT, current);
-            setResult(RESULT_OK, returnIntent);
-            finish();
+            finishWithResult();
         }
+    }
+
+    private void finishWithResult() {
+        Intent returnIntent = new Intent();
+        returnIntent.putExtra(ELEMENT, current);
+        setResult(RESULT_OK, returnIntent);
+        finish();
     }
 
     @Override
@@ -125,6 +138,13 @@ public class VideoPlayerActivity extends AppCompatActivity implements ControlsOv
             public void onEvent(MediaPlayer.Event event) {
                 if (event.type == MediaPlayer.Event.Stopped) {
                     Log.i(TAG, "Video stopped");
+                    if (!next) {
+                        finishWithResult();
+                        return;
+                    } else if (!loop && index == list.size() - 1) {
+                        finishWithResult();
+                        return;
+                    }
                     next();
                 } else if (event.type == MediaPlayer.Event.Playing) {
                     isPlaying.setValue(true);

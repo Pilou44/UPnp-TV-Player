@@ -18,7 +18,6 @@ import com.wechantloup.upnpvideoplayer.dataholder.DlnaRoot
 import com.wechantloup.upnpvideoplayer.dataholder.VideoElement
 import com.wechantloup.upnpvideoplayer.main.MainActivity
 import com.wechantloup.upnpvideoplayer.utils.Serializer.deserialize
-import com.wechantloup.upnpvideoplayer.utils.Serializer.serialize
 import com.wechantloup.upnpvideoplayer.videoPlayer.VideoPlayerActivity
 import org.fourthline.cling.android.AndroidUpnpService
 import org.fourthline.cling.android.AndroidUpnpServiceImpl
@@ -36,7 +35,7 @@ import org.fourthline.cling.support.model.DIDLContent
 
 class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener {
 
-    private val videos = mutableListOf<VideoElement>()
+    private val videos = ArrayList<VideoElement>()
     private val mHandler = Handler()
     var rootPath = "root"
     var rootName = ""
@@ -63,11 +62,7 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        Log.i(TAG, "onCreate")
         super.onCreate(savedInstanceState)
-        //        ContentContainer mContentContainer = ContentBrowser.getInstance(getActivity())
-//                                                           .getLastSelectedContentContainer();
-//        setTitle(mContentContainer.getName());
         setupFragment()
     }
 
@@ -125,12 +120,7 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
         setGridPresenter(gridPresenter)
         val mAdapter = ArrayObjectAdapter(CardPresenter())
 
-//        ContentContainer contentContainer = ContentBrowser.getInstance(getActivity())
-//                                                          .getLastSelectedContentContainer();
-//        for (Content content : contentContainer) {
-//            mAdapter.add(content);
-//        }
-        setAdapter(mAdapter)
+        adapter = mAdapter
         setOnSearchClickedListener {
             val intent = Intent(activity, MainActivity::class.java)
             startActivity(intent)
@@ -138,7 +128,7 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
         }
         titleView = BrowseTitleView(activity)
 
-        setOnItemViewClickedListener { itemViewHolder, item, rowViewHolder, row -> onItemClicked(item) }
+        setOnItemViewClickedListener { _, item, _, _ -> onItemClicked(item) }
     }
 
     private fun onItemClicked(item: Any) {
@@ -146,18 +136,10 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
             if (item.isDirectory) {
                 parseAndUpdate(item)
             } else {
-                val playerList = mutableListOf<VideoElement>()
                 val index = videos.indexOf(item)
-                playerList.addAll(videos.subList(index, videos.size).filter { !it.isDirectory })
-                if (index > 0) {
-                    playerList.addAll(videos.subList(0, index).filter { !it.isDirectory })
-                }
-//                val playerUrls = playerList.map {
-//                    it.path
-//                }
                 val intent = Intent(activity, VideoPlayerActivity::class.java)
-                val list = ArrayList<VideoElement>().apply { addAll(playerList) }
-                intent.putExtra(VideoPlayerActivity.EXTRA_URLS, list)
+                intent.putExtra(VideoPlayerActivity.EXTRA_URLS, videos)
+                intent.putExtra(VideoPlayerActivity.EXTRA_INDEX, index)
                 startActivityForResult(intent, MEDIA_PLAYER)
             }
         }
