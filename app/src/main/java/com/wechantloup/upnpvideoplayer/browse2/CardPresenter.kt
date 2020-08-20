@@ -6,6 +6,8 @@ import androidx.leanback.widget.ImageCardView
 import androidx.leanback.widget.Presenter
 import androidx.core.content.ContextCompat
 import android.util.Log
+import android.view.View.GONE
+import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.RelativeLayout
@@ -53,33 +55,44 @@ class CardPresenter : Presenter() {
         params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
         titleView.layoutParams = params
 
-        cardView.isFocusable = true
-        cardView.isFocusableInTouchMode = true
         updateCardBackgroundColor(cardView, false)
         return ViewHolder(cardView)
     }
 
-    override fun onBindViewHolder(viewHolder: Presenter.ViewHolder, item: Any) {
-        val movie = item as VideoElement
+    override fun onBindViewHolder(viewHolder: ViewHolder, item: Any) {
         val cardView = viewHolder.view as ImageCardView
+        cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
+        val mainImage = cardView.findViewById<ImageView>(R.id.main_image)
+        val info = cardView.findViewById<RelativeLayout>(R.id.info_field)
+        if (item is VideoElement) {
+            Log.d(TAG, "onBindViewHolder")
 
-        Log.d(TAG, "onBindViewHolder")
+            mainImage.visibility = VISIBLE
+            info.visibility = VISIBLE
+            cardView.isFocusable = true
+            cardView.isFocusableInTouchMode = true
+
 //        if (movie.cardImageUrl != null) {
-            cardView.titleText = movie.name
+            cardView.titleText = item.name
 //            cardView.contentText = movie.studio
-            cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
-        if (movie.isDirectory) {
-            cardView.mainImageView.apply {
-                scaleType = ImageView.ScaleType.FIT_CENTER
-                setImageResource(R.drawable.ic_directory)
+            if (item.isDirectory) {
+                cardView.mainImageView.apply {
+                    scaleType = ImageView.ScaleType.FIT_CENTER
+                    setImageResource(R.drawable.ic_directory)
+                }
             }
-        }
 //            Glide.with(viewHolder.view.context)
 //                .load(movie.cardImageUrl)
 //                .centerCrop()
 //                .error(mDefaultCardImage)
 //                .into(cardView.mainImageView)
 //        }
+        } else {
+            mainImage.visibility = GONE
+            info.visibility = GONE
+            cardView.isFocusable = false
+            cardView.isFocusableInTouchMode = false
+        }
     }
 
     override fun onUnbindViewHolder(viewHolder: Presenter.ViewHolder) {

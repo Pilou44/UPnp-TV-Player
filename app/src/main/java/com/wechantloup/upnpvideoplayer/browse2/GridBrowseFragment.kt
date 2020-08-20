@@ -261,6 +261,9 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
                 adapter.add(element)
             }
 
+            val rest = NUM_COLUMNS - (didl.containers.size % NUM_COLUMNS)
+            repeat(rest) { adapter.add(Any()) }
+
             videos.clear()
             Log.i(TAG, "found " + didl.items.size + " items.")
             for (i in didl.items.indices) {
