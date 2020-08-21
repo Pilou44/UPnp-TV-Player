@@ -1,15 +1,13 @@
 package com.wechantloup.upnpvideoplayer.rootSetter
 
 import android.graphics.Color
-import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.RelativeLayout
 import android.widget.TextView
-import androidx.annotation.LayoutRes
 import androidx.recyclerview.widget.RecyclerView
 import com.wechantloup.upnpvideoplayer.R
-import com.wechantloup.upnpvideoplayer.dataholder.DlnaElement
+import com.wechantloup.upnpvideoplayer.data.dataholder.DlnaElement
 import com.wechantloup.upnpvideoplayer.utils.ViewUtils.inflate
 
 class RootSetterAdapter(

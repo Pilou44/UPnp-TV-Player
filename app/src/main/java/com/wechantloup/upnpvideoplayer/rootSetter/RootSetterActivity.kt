@@ -12,8 +12,8 @@ import android.preference.PreferenceManager
 import android.util.Log
 import androidx.recyclerview.widget.RecyclerView
 import com.wechantloup.upnpvideoplayer.R
-import com.wechantloup.upnpvideoplayer.dataholder.DlnaElement
-import com.wechantloup.upnpvideoplayer.dataholder.DlnaRoot
+import com.wechantloup.upnpvideoplayer.data.dataholder.DlnaElement
+import com.wechantloup.upnpvideoplayer.data.dataholder.DlnaRoot
 import com.wechantloup.upnpvideoplayer.utils.Serializer.serialize
 import org.fourthline.cling.android.AndroidUpnpService
 import org.fourthline.cling.android.AndroidUpnpServiceImpl

@@ -9,13 +9,13 @@ import android.os.Handler
 import android.os.IBinder
 import android.preference.PreferenceManager
 import android.util.Log
-import androidx.leanback.app.VerticalGridFragment
+import androidx.leanback.app.VerticalGridSupportFragment
 import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.VerticalGridPresenter
 import com.wechantloup.upnpvideoplayer.browse.RetrieveDeviceThread
 import com.wechantloup.upnpvideoplayer.browse.RetrieveDeviceThreadListener
-import com.wechantloup.upnpvideoplayer.dataholder.DlnaRoot
-import com.wechantloup.upnpvideoplayer.dataholder.VideoElement
+import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
+import com.wechantloup.upnpvideoplayer.data.dataholder.DlnaRoot
 import com.wechantloup.upnpvideoplayer.main.MainActivity
 import com.wechantloup.upnpvideoplayer.utils.Serializer.deserialize
 import com.wechantloup.upnpvideoplayer.videoPlayer.VideoPlayerActivity
@@ -33,15 +33,15 @@ import org.fourthline.cling.support.contentdirectory.callback.Browse
 import org.fourthline.cling.support.model.BrowseFlag
 import org.fourthline.cling.support.model.DIDLContent
 
-class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener {
+class GridBrowseFragment : VerticalGridSupportFragment(), RetrieveDeviceThreadListener {
 
-    private val videos = ArrayList<VideoElement>()
+    private val videos = ArrayList<BrowsableVideoElement>()
     private val mHandler = Handler()
     var rootPath = "root"
     var rootName = ""
     private var bound = false
     private lateinit var remoteService: RemoteService
-    var mCurrent: VideoElement? = null
+    var mCurrent: BrowsableVideoElement? = null
     private var mUpnpService: AndroidUpnpService? = null
     private val mRegistryListener: BrowseRegistryListener =
         BrowseRegistryListener(this)
@@ -71,7 +71,7 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
 
         // This will start the UPnP service if it wasn't already started
         Log.i(TAG, "Start UPnP Service")
-        activity.applicationContext.bindService(
+        activity?.applicationContext?.bindService(
             Intent(activity, AndroidUpnpServiceImpl::class.java),
             mServiceConnection,
             Context.BIND_AUTO_CREATE
@@ -84,7 +84,7 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
         mUpnpService?.registry?.removeListener(mRegistryListener)
         // This will stop the UPnP service if nobody else is bound to it
         if (bound) {
-            activity.applicationContext.unbindService(mServiceConnection)
+            activity?.applicationContext?.unbindService(mServiceConnection)
         }
     }
 
@@ -94,7 +94,7 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == MEDIA_PLAYER) {
-            val lastPlayedElement = data?.getParcelableExtra<VideoElement>(VideoPlayerActivity.ELEMENT)
+            val lastPlayedElement = data?.getParcelableExtra<BrowsableVideoElement>(VideoPlayerActivity.ELEMENT)
             lastPlayedElement?.let {
                 val pos = (adapter as ArrayObjectAdapter).indexOf(it)
                 setSelectedPosition(pos)
@@ -108,7 +108,7 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
     fun onBackPressed() {
         val current = mCurrent
         if (current?.parent == null) {
-            activity.finish()
+            activity?.finish()
         } else {
             parseAndUpdate(current.parent, current)
         }
@@ -124,15 +124,15 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
         setOnSearchClickedListener {
             val intent = Intent(activity, MainActivity::class.java)
             startActivity(intent)
-            activity.finish()
+            activity?.finish()
         }
-        titleView = BrowseTitleView(activity)
+        titleView = BrowseTitleView(requireContext())
 
         setOnItemViewClickedListener { _, item, _, _ -> onItemClicked(item) }
     }
 
     private fun onItemClicked(item: Any) {
-        if (item is VideoElement) {
+        if (item is BrowsableVideoElement) {
             if (item.isDirectory) {
                 parseAndUpdate(item)
             } else {
@@ -191,7 +191,7 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
     private fun deviceAdded(device: Device<*, *, *>) {
         if (device.type.type == "MediaServer") {
             Log.i(TAG, "Found media server")
-            activity.runOnUiThread(Runnable {
+            activity?.runOnUiThread(Runnable {
                 if (device.isFullyHydrated) {
                     for (service in device.services as Array<RemoteService>) {
                         if (service.serviceType.type == "ContentDirectory") {
@@ -206,7 +206,7 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
                                     ) {
                                         if (mCurrent == null) {
                                             val current =
-                                                VideoElement(true, rootPath, rootName, null)
+                                                BrowsableVideoElement(  true, rootPath, rootName, null)
                                             parseAndUpdate(didl, current)
                                         }
                                     }
@@ -229,7 +229,7 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
         }
     }
 
-    private fun parseAndUpdate(element: VideoElement, caller: VideoElement? = null) {
+    private fun parseAndUpdate(element: BrowsableVideoElement, caller: BrowsableVideoElement? = null) {
         mUpnpService?.controlPoint
             ?.execute(object : Browse(remoteService, element.path, BrowseFlag.DIRECT_CHILDREN) {
                 override fun received(
@@ -244,14 +244,14 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
             })
     }
 
-    private fun parseAndUpdate(didl: DIDLContent, clickedElement: VideoElement, caller: VideoElement? = null) {
+    private fun parseAndUpdate(didl: DIDLContent, clickedElement: BrowsableVideoElement, caller: BrowsableVideoElement? = null) {
         mHandler.post {
             title = clickedElement.name
 
             val adapter = ArrayObjectAdapter(CardPresenter())
             Log.i(TAG, "found " + didl.containers.size + " items.")
             for (i in didl.containers.indices) {
-                val element = VideoElement(
+                val element = BrowsableVideoElement(
                     true,
                     didl.containers[i].id,
                     didl.containers[i].title,
@@ -267,7 +267,7 @@ class GridBrowseFragment : VerticalGridFragment(), RetrieveDeviceThreadListener 
             videos.clear()
             Log.i(TAG, "found " + didl.items.size + " items.")
             for (i in didl.items.indices) {
-                val element = VideoElement(
+                val element = BrowsableVideoElement(
                     false,
                     didl.items[i].resources[0].value,
                     didl.items[i].title,

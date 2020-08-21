@@ -13,9 +13,9 @@ import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.TextView
 
-import com.bumptech.glide.Glide
 import com.wechantloup.upnpvideoplayer.R
-import com.wechantloup.upnpvideoplayer.dataholder.VideoElement
+import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
+import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
 import kotlin.properties.Delegates
 
 /**
@@ -60,13 +60,12 @@ class CardPresenter : Presenter() {
     }
 
     override fun onBindViewHolder(viewHolder: ViewHolder, item: Any) {
+        Log.d(TAG, "onBindViewHolder")
         val cardView = viewHolder.view as ImageCardView
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
         val mainImage = cardView.findViewById<ImageView>(R.id.main_image)
         val info = cardView.findViewById<RelativeLayout>(R.id.info_field)
-        if (item is VideoElement) {
-            Log.d(TAG, "onBindViewHolder")
-
+        if (item is BrowsableVideoElement) {
             mainImage.visibility = VISIBLE
             info.visibility = VISIBLE
             cardView.isFocusable = true

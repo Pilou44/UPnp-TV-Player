@@ -1,14 +1,14 @@
-package com.wechantloup.upnpvideoplayer.dataholder
+package com.wechantloup.upnpvideoplayer.data.dataholder
 
 import android.os.Parcelable
 import kotlinx.android.parcel.Parcelize
 
 @Parcelize
-data class VideoElement(
+data class BrowsableVideoElement(
     val isDirectory: Boolean,
     val path: String,
     val name: String,
-    val parent: VideoElement?
+    val parent: BrowsableVideoElement?
 ) : Parcelable {
 
     override fun equals(other: Any?): Boolean {

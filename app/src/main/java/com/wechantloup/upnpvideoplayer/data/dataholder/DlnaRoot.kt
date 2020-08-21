@@ -1,4 +1,4 @@
-package com.wechantloup.upnpvideoplayer.dataholder
+package com.wechantloup.upnpvideoplayer.data.dataholder
 
 data class DlnaRoot(
     val mName: String,

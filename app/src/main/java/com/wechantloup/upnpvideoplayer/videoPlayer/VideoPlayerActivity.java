@@ -14,7 +14,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.wechantloup.upnpvideoplayer.R;
-import com.wechantloup.upnpvideoplayer.dataholder.VideoElement;
+import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement;
 
 import org.jetbrains.annotations.NotNull;
 import org.videolan.libvlc.LibVLC;
@@ -42,8 +42,8 @@ public class VideoPlayerActivity extends AppCompatActivity implements ControlsOv
     private LibVLC mLibVLC = null;
     private MediaPlayer mMediaPlayer = null;
     private ControlsOverlay controls;
-    private ArrayList<VideoElement> list;
-    private VideoElement current = null;
+    private ArrayList<BrowsableVideoElement> list;
+    private BrowsableVideoElement current = null;
     private int index;
     private static final String TAG = VideoPlayerActivity.class.getSimpleName();
     private MutableLiveData<Long> duration = new MutableLiveData<>();
