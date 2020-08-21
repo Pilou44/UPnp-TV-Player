@@ -8,14 +8,11 @@ import android.widget.Button
 import android.widget.CheckBox
 import com.wechantloup.upnpvideoplayer.MainActivity
 import com.wechantloup.upnpvideoplayer.R
-import com.wechantloup.upnpvideoplayer.browse.BrowseActivity
 import com.wechantloup.upnpvideoplayer.browse2.SuperBrowseActivity
 import com.wechantloup.upnpvideoplayer.rootSetter.RootSetterActivity
 
 class MainActivity : Activity() {
 
-    private lateinit var browse: Button
-    private lateinit var browse2: Button
     private lateinit var root: Button
     private lateinit var test: Button
     private lateinit var next: CheckBox
@@ -27,20 +24,11 @@ class MainActivity : Activity() {
 
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
 
-        browse = findViewById(R.id.browse)
-        browse2 = findViewById(R.id.browse2)
         root = findViewById(R.id.root)
         test = findViewById(R.id.test)
         next = findViewById(R.id.go_next)
         loop = findViewById(R.id.loop)
 
-        browse.setOnClickListener {
-            launchBrowser()
-        }
-
-        browse2.setOnClickListener {
-            launchNewBrowser()
-        }
         root.setOnClickListener {
             launchRootSetter()
         }
@@ -61,11 +49,6 @@ class MainActivity : Activity() {
 
     override fun onBackPressed() {
         launchNewBrowser()
-    }
-
-    private fun launchBrowser() {
-        val intent = Intent(this, BrowseActivity::class.java)
-        startActivity(intent)
     }
 
     private fun launchNewBrowser() {

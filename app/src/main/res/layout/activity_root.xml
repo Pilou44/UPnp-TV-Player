@@ -4,20 +4,6 @@
     android:layout_height="match_parent">
 
     <Button
-        android:id="@+id/browse"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Browse"
-        android:visibility="gone"/>
-
-    <Button
-        android:id="@+id/browse2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="New Browse"
-        android:visibility="gone" />
-
-    <Button
         android:id="@+id/root"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
