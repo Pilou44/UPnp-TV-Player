@@ -90,6 +90,7 @@ class CardPresenter : Presenter() {
         } else {
             mainImage.visibility = GONE
             info.visibility = GONE
+            cardView.titleText = null
             cardView.isFocusable = false
             cardView.isFocusableInTouchMode = false
         }
