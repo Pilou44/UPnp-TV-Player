@@ -2,11 +2,13 @@ package com.wechantloup.upnpvideoplayer.browse2
 
 import android.app.Activity
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.FragmentActivity
 import androidx.room.Room
 import androidx.lifecycle.lifecycleScope
 import com.wechantloup.upnpvideoplayer.R
+import com.wechantloup.upnpvideoplayer.UPnPApplication
 import com.wechantloup.upnpvideoplayer.data.content.AppDatabase
 import kotlinx.coroutines.launch
 
@@ -23,14 +25,16 @@ class SuperBrowseActivity : FragmentActivity() {
     }
 
     private fun getUnfinishedVideo() {
-        val db = Room.databaseBuilder(
-            applicationContext,
-            AppDatabase::class.java,
-            applicationContext.packageName
-        ).build()
-
+//        val db = Room.databaseBuilder(
+//            applicationContext,
+//            AppDatabase::class.java,
+//            applicationContext.packageName
+//        ).build()
+//
         lifecycleScope.launch {
-            db.videoDao().all()
+//            val list = db.videoDao().all()
+            val list = (applicationContext as UPnPApplication).videoRepository.getAllVideo()
+            Log.i("TEST", "${list.size} elements found")
         }
     }
 

@@ -6,7 +6,19 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "video")
 data class VideoElement(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val isDirectory: Boolean,
     val path: String,
-    val name: String
-)
+    val pathToDirectory: String,
+    val name: String,
+    val position: Long,
+    val date: Long
+) {
+
+    constructor(browsableElement: BrowsableVideoElement, position: Long, time: Long) : this(
+        0,
+        browsableElement.path,
+        browsableElement.path.substring(0, browsableElement.path.lastIndexOf("/")),
+        browsableElement.name,
+        position,
+        time
+    )
+}

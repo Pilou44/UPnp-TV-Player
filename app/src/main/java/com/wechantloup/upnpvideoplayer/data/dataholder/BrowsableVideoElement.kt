@@ -12,6 +12,6 @@ data class BrowsableVideoElement(
 ) : Parcelable {
 
     override fun equals(other: Any?): Boolean {
-        return other is VideoElement && path == other.path && name == other.name
+        return other is BrowsableVideoElement && path == other.path && name == other.name
     }
 }
