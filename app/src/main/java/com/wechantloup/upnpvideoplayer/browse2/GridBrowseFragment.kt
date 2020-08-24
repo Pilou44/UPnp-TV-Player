@@ -247,9 +247,10 @@ class GridBrowseFragment : VerticalGridSupportFragment(), RetrieveDeviceThreadLi
     private fun parseAndUpdate(didl: DIDLContent, clickedElement: BrowsableVideoElement, caller: BrowsableVideoElement? = null) {
         mHandler.post {
             title = clickedElement.name
-
             val adapter = ArrayObjectAdapter(CardPresenter())
-            Log.i(TAG, "found " + didl.containers.size + " items.")
+
+            val directoryQuantity = didl.containers.size
+            Log.i(TAG, "found " + directoryQuantity + " items.")
             for (i in didl.containers.indices) {
                 val element = BrowsableVideoElement(
                     true,
@@ -261,8 +262,11 @@ class GridBrowseFragment : VerticalGridSupportFragment(), RetrieveDeviceThreadLi
                 adapter.add(element)
             }
 
-            val rest = NUM_COLUMNS - (didl.containers.size % NUM_COLUMNS)
-            repeat(rest) { adapter.add(Any()) }
+            val lastLine = directoryQuantity % NUM_COLUMNS
+            if (lastLine > 0) {
+                val rest = NUM_COLUMNS - lastLine
+                repeat(rest) { adapter.add(Any()) }
+            }
 
             videos.clear()
             Log.i(TAG, "found " + didl.items.size + " items.")
