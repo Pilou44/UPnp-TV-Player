@@ -31,6 +31,7 @@ class VideoPlayerActivity : AppCompatActivity(), ControlsOverlayListener {
     private var list: ArrayList<BrowsableVideoElement>? = null
     private var current: BrowsableVideoElement? = null
     private var index = 0
+    private var position = 0L
     override val duration = MutableLiveData<Long>()
     override val time = MutableLiveData<Long>()
     override val progress = MutableLiveData<Float>()
@@ -52,6 +53,7 @@ class VideoPlayerActivity : AppCompatActivity(), ControlsOverlayListener {
         controls = findViewById(R.id.controls)
         list = intent.getParcelableArrayListExtra(EXTRA_URLS)
         index = intent.getIntExtra(EXTRA_INDEX, 0) - 1
+        position = intent.getLongExtra(EXTRA_POSITION, 0L)
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
@@ -120,6 +122,7 @@ class VideoPlayerActivity : AppCompatActivity(), ControlsOverlayListener {
             private var audioTracksCount = -1
             private var spuTracksCount = -1
             override fun onEvent(event: MediaPlayer.Event) {
+                Log.i(TAG, "Video event: ${event.type}")
                 if (event.type == MediaPlayer.Event.Stopped) {
                     Log.i(TAG, "Video stopped")
                     if (!next) {
@@ -132,6 +135,11 @@ class VideoPlayerActivity : AppCompatActivity(), ControlsOverlayListener {
                     next()
                 } else if (event.type == MediaPlayer.Event.Playing) {
                     isPlaying.setValue(true)
+                } else if (event.type == MediaPlayer.Event.Buffering) {
+                    if (position > 0) {
+                        mMediaPlayer!!.time = position
+                        position = 0L
+                    }
                 } else if (event.type == MediaPlayer.Event.Paused) {
                     isPlaying.setValue(false)
                 } else if (event.type == MediaPlayer.Event.LengthChanged) {
@@ -246,6 +254,7 @@ class VideoPlayerActivity : AppCompatActivity(), ControlsOverlayListener {
         private const val ENABLE_SUBTITLES = true
         const val EXTRA_URLS = "urls"
         const val EXTRA_INDEX = "index"
+        const val EXTRA_POSITION = "position"
         private val TAG = VideoPlayerActivity::class.java.simpleName
     }
 }

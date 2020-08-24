@@ -15,4 +15,8 @@ internal class VideoRepository(db: AppDatabase) {
         return videoDao.all()
     }
 
+    suspend fun removeVideo(element: VideoElement): Int {
+        return videoDao.delete(element)
+    }
+
 }

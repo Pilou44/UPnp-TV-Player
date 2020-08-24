@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey
 data class VideoElement(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val path: String,
-    val pathToDirectory: String,
+    val containerId: String,
     val name: String,
     val position: Long,
     val date: Long
@@ -16,7 +16,7 @@ data class VideoElement(
     constructor(browsableElement: BrowsableVideoElement, position: Long, time: Long) : this(
         0,
         browsableElement.path,
-        browsableElement.path.substring(0, browsableElement.path.lastIndexOf("/")),
+        browsableElement.parent!!.path,
         browsableElement.name,
         position,
         time

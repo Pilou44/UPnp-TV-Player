@@ -1,16 +1,8 @@
 package com.wechantloup.upnpvideoplayer.browse2
 
-import android.app.Activity
 import android.os.Bundle
-import android.util.Log
-import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.FragmentActivity
-import androidx.room.Room
-import androidx.lifecycle.lifecycleScope
 import com.wechantloup.upnpvideoplayer.R
-import com.wechantloup.upnpvideoplayer.UPnPApplication
-import com.wechantloup.upnpvideoplayer.data.content.AppDatabase
-import kotlinx.coroutines.launch
 
 class SuperBrowseActivity : FragmentActivity() {
 
@@ -20,22 +12,6 @@ class SuperBrowseActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_super_browse)
         fragment = supportFragmentManager.findFragmentById(R.id.main_browse_fragment) as GridBrowseFragment
-
-        getUnfinishedVideo()
-    }
-
-    private fun getUnfinishedVideo() {
-//        val db = Room.databaseBuilder(
-//            applicationContext,
-//            AppDatabase::class.java,
-//            applicationContext.packageName
-//        ).build()
-//
-        lifecycleScope.launch {
-//            val list = db.videoDao().all()
-            val list = (applicationContext as UPnPApplication).videoRepository.getAllVideo()
-            Log.i("TEST", "${list.size} elements found")
-        }
     }
 
     override fun onBackPressed() {

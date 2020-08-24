@@ -13,6 +13,8 @@ import com.wechantloup.upnpvideoplayer.browse.RetrieveDeviceThread
 import com.wechantloup.upnpvideoplayer.browse.RetrieveDeviceThreadListener
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.DlnaRoot
+import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
+import com.wechantloup.upnpvideoplayer.data.repository.VideoRepository
 import com.wechantloup.upnpvideoplayer.utils.Serializer.deserialize
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -31,7 +33,9 @@ import org.fourthline.cling.support.contentdirectory.callback.Browse
 import org.fourthline.cling.support.model.BrowseFlag
 import org.fourthline.cling.support.model.DIDLContent
 
-internal class BrowseViewModel : ViewModel(), BrowseContract.ViewModel, RetrieveDeviceThreadListener {
+internal class BrowseViewModel(
+    private val videoRepository: VideoRepository
+) : ViewModel(), BrowseContract.ViewModel, RetrieveDeviceThreadListener {
 
     private lateinit var view: BrowseContract.View
     private lateinit var context: Context // ToDo Must be removed once repositories have been created
@@ -98,41 +102,83 @@ internal class BrowseViewModel : ViewModel(), BrowseContract.ViewModel, Retrieve
         return true
     }
 
-    private fun deviceAdded(device: Device<*, *, *>) {
+    override fun convertToBrowsableVideoElement(item: VideoElement) {
         viewModelScope.launch {
-            if (device.type.type == "MediaServer") {
-                Log.i(TAG, "Found media server")
-                if (device.isFullyHydrated) {
-                    for (service in device.services as Array<RemoteService>) {
-                        if (service.serviceType.type == "ContentDirectory") {
-                            Log.i(TAG, "ContentDirectory found")
-                            remoteService = service
-                            Log.i(TAG, "Browse root $rootPath")
-                            upnpService?.controlPoint
-                                ?.execute(object : Browse(service, rootPath, BrowseFlag.DIRECT_CHILDREN) {
-                                    override fun received(
-                                        arg0: ActionInvocation<*>?,
-                                        didl: DIDLContent
-                                    ) {
+            videoRepository.removeVideo(item)
+            upnpService?.controlPoint
+                ?.execute(object : Browse(remoteService, item.containerId, BrowseFlag.DIRECT_CHILDREN) {
+                    override fun received(
+                        arg0: ActionInvocation<*>?,
+                        didl: DIDLContent
+                    ) {
+                        Log.i(TAG, "found " + didl.items.size + " items.")
+                        val parent = BrowsableVideoElement(
+                            true,
+                            item.containerId,
+                            "parent",
+                            null
+                        )
+                        val movies = ArrayList<BrowsableVideoElement>()
+                        didl.items.forEach {
+                            BrowsableVideoElement(
+                                false,
+                                it.resources[0].value,
+                                it.title,
+                                parent
+                            ).also { element ->
+                                movies.add(element)
+                            }
+                        }
+                        val index = movies.indexOfFirst { it.path == item.path }
+
+                        if (index < 0) return
+
+                        view.launch(movies, index, item.position)
+                    }
+
+                    override fun updateStatus(status: Status) {}
+                    override fun failure(arg0: ActionInvocation<*>?, arg1: UpnpResponse, arg2: String) {}
+                })
+        }
+    }
+
+    private fun deviceAdded(device: Device<*, *, *>) {
+        if (device.type.type == "MediaServer") {
+            Log.i(TAG, "Found media server")
+            if (device.isFullyHydrated) {
+                for (service in device.services as Array<RemoteService>) {
+                    if (service.serviceType.type == "ContentDirectory") {
+                        Log.i(TAG, "ContentDirectory found")
+                        remoteService = service
+                        Log.i(TAG, "Browse root $rootPath")
+                        upnpService?.controlPoint
+                            ?.execute(object : Browse(service, rootPath, BrowseFlag.DIRECT_CHILDREN) {
+                                override fun received(
+                                    arg0: ActionInvocation<*>?,
+                                    didl: DIDLContent
+                                ) {
+                                    viewModelScope.launch {
                                         if (currentElement == null) {
                                             val current =
                                                 BrowsableVideoElement(  true, rootPath, rootName, null)
                                             parseAndUpdate(didl, current)
+                                        } else {
+                                            refreshStarted()
                                         }
                                     }
+                                }
 
-                                    override fun updateStatus(status: Status) {
-                                        Log.i(TAG, "updateStatus")
-                                    }
-                                    override fun failure(
-                                        arg0: ActionInvocation<*>?,
-                                        arg1: UpnpResponse,
-                                        arg2: String
-                                    ) {
-                                        Log.i(TAG, "failure")
-                                    }
-                                })
-                        }
+                                override fun updateStatus(status: Status) {
+                                    Log.i(TAG, "updateStatus")
+                                }
+                                override fun failure(
+                                    arg0: ActionInvocation<*>?,
+                                    arg1: UpnpResponse,
+                                    arg2: String
+                                ) {
+                                    Log.i(TAG, "failure")
+                                }
+                            })
                     }
                 }
             }
@@ -146,7 +192,9 @@ internal class BrowseViewModel : ViewModel(), BrowseContract.ViewModel, Retrieve
                     arg0: ActionInvocation<*>?,
                     didl: DIDLContent
                 ) {
-                    parseAndUpdate(didl, element, caller)
+                    viewModelScope.launch {
+                        parseAndUpdate(didl, element, caller)
+                    }
                 }
 
                 override fun updateStatus(status: Status) {}
@@ -154,8 +202,16 @@ internal class BrowseViewModel : ViewModel(), BrowseContract.ViewModel, Retrieve
             })
     }
 
-    private fun parseAndUpdate(didl: DIDLContent, clickedElement: BrowsableVideoElement, caller: BrowsableVideoElement? = null) {
+    private suspend fun refreshStarted() {
+        val startedMovies = videoRepository.getAllVideo()
+        view.updateStarted(startedMovies)
+    }
+
+    private suspend fun parseAndUpdate(didl: DIDLContent, clickedElement: BrowsableVideoElement, caller: BrowsableVideoElement? = null) {
         val title = clickedElement.name
+
+        val startedMovies = videoRepository.getAllVideo()
+        Log.i("TAG", "${startedMovies.size} started elements found")
 
         Log.i(TAG, "found " + didl.containers.size + " items.")
         val directories = didl.containers.map {
@@ -179,7 +235,7 @@ internal class BrowseViewModel : ViewModel(), BrowseContract.ViewModel, Retrieve
 
         currentElement = clickedElement
 
-        view.displayContent(title, directories, movies, caller)
+        view.displayContent(title, startedMovies, directories, movies, caller)
     }
 
     private fun findDevice() {

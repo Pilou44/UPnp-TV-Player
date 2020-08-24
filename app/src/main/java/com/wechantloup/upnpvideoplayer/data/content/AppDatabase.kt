@@ -23,12 +23,12 @@ internal abstract class AppDatabase : RoomDatabase() {
         suspend fun all(): List<VideoElement>
 
         @Insert(onConflict = OnConflictStrategy.IGNORE)
-        suspend fun insert(car: VideoElement): Long?
+        suspend fun insert(element: VideoElement): Long?
 
         @Update
-        suspend fun update(car: VideoElement): Int
+        suspend fun update(element: VideoElement): Int
 
         @Delete
-        suspend fun delete(car: VideoElement): Int
+        suspend fun delete(element: VideoElement): Int
     }
 }

@@ -86,6 +86,21 @@ class CardPresenter : Presenter() {
 //                .error(mDefaultCardImage)
 //                .into(cardView.mainImageView)
 //        }
+        } else if (item is VideoElement) {
+            mainImage.visibility = VISIBLE
+            info.visibility = VISIBLE
+            cardView.isFocusable = true
+            cardView.isFocusableInTouchMode = true
+
+//        if (movie.cardImageUrl != null) {
+            cardView.titleText = item.name
+//            cardView.contentText = movie.studio
+//            Glide.with(viewHolder.view.context)
+//                .load(movie.cardImageUrl)
+//                .centerCrop()
+//                .error(mDefaultCardImage)
+//                .into(cardView.mainImageView)
+//        }
         } else {
             mainImage.visibility = GONE
             info.visibility = GONE

@@ -7,7 +7,9 @@ import androidx.leanback.app.VerticalGridSupportFragment
 import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.VerticalGridPresenter
 import androidx.lifecycle.ViewModelProvider
+import com.wechantloup.upnpvideoplayer.UPnPApplication
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
+import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
 import com.wechantloup.upnpvideoplayer.main.MainActivity
 import com.wechantloup.upnpvideoplayer.videoPlayer.VideoPlayerActivity
 
@@ -26,7 +28,11 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
     }
 
     private fun initViewModel() {
-        ViewModelProvider(this)[BrowseViewModel::class.java]
+        val application = (requireContext().applicationContext) as UPnPApplication
+        BrowseViewModelFactory.createViewModelFactory(
+            application
+        )
+            .let { ViewModelProvider(viewModelStore, it)[BrowseViewModel::class.java] }
             .apply { setView(this@GridBrowseFragment) }
             .also { viewModel = it }
     }
@@ -83,22 +89,41 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
                 viewModel.parse(item)
             } else {
                 val index = videos.indexOf(item)
-                val intent = Intent(activity, VideoPlayerActivity::class.java)
-                intent.putExtra(VideoPlayerActivity.EXTRA_URLS, videos)
-                intent.putExtra(VideoPlayerActivity.EXTRA_INDEX, index)
-                startActivityForResult(intent, MEDIA_PLAYER)
+                launch(videos, index, 0L)
             }
+        } else if (item is VideoElement) {
+            viewModel.convertToBrowsableVideoElement(item)
         }
     }
 
-    companion object {
-        private val TAG = GridBrowseFragment::class.java.simpleName
-        private const val NUM_COLUMNS = 5
-        private const val MEDIA_PLAYER = 2911
+    override fun launch(movies: ArrayList<BrowsableVideoElement>, index: Int, position: Long) {
+        val intent = Intent(activity, VideoPlayerActivity::class.java)
+        intent.putExtra(VideoPlayerActivity.EXTRA_URLS, movies)
+        intent.putExtra(VideoPlayerActivity.EXTRA_INDEX, index)
+        intent.putExtra(VideoPlayerActivity.EXTRA_POSITION, position)
+        startActivityForResult(intent, MEDIA_PLAYER)
+    }
+
+    override fun updateStarted(startedMovies: List<VideoElement>) {
+        val adapter = adapter as ArrayObjectAdapter
+        var count = 0
+        while (count < adapter.size() && adapter[count] !is BrowsableVideoElement) {
+            count++
+        }
+        if (count == adapter.size()) return
+        adapter.removeItems(0, count)
+        adapter.addAll(0, startedMovies)
+
+        val lastLine = startedMovies.size % NUM_COLUMNS
+        if (lastLine > 0) {
+            val rest = NUM_COLUMNS - lastLine
+            repeat(rest) { adapter.add(startedMovies.size, Any()) }
+        }
     }
 
     override fun displayContent(
         title: String,
+        startedMovies: List<VideoElement>,
         directories: List<BrowsableVideoElement>,
         movies: List<BrowsableVideoElement>,
         selectedElement: BrowsableVideoElement?
@@ -107,9 +132,17 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
             this.title = title
             val adapter = ArrayObjectAdapter(CardPresenter())
 
-            adapter.addAll(0, directories)
+            adapter.addAll(startedMovies)
 
-            val lastLine = directories.size % NUM_COLUMNS
+            var lastLine = startedMovies.size % NUM_COLUMNS
+            if (lastLine > 0) {
+                val rest = NUM_COLUMNS - lastLine
+                repeat(rest) { adapter.add(Any()) }
+            }
+
+            adapter.addAll(directories)
+
+            lastLine = directories.size % NUM_COLUMNS
             if (lastLine > 0) {
                 val rest = NUM_COLUMNS - lastLine
                 repeat(rest) { adapter.add(Any()) }
@@ -117,7 +150,7 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
 
             videos.clear()
             videos.addAll(movies)
-            adapter.addAll(adapter.size(), movies)
+            adapter.addAll(movies)
 
             var pos = 0
             selectedElement?.let { pos = adapter.indexOf(it) }
@@ -126,5 +159,15 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
 
             this.adapter = adapter
         }
+    }
+
+    private fun <E> ArrayObjectAdapter.addAll(items: Collection<E>) {
+        addAll(size(), items)
+    }
+
+    companion object {
+        private val TAG = GridBrowseFragment::class.java.simpleName
+        private const val NUM_COLUMNS = 5
+        private const val MEDIA_PLAYER = 2911
     }
 }
