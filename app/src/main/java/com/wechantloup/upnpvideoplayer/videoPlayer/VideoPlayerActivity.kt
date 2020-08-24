@@ -10,10 +10,13 @@ import android.view.KeyEvent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.lifecycleScope
 import com.wechantloup.upnpvideoplayer.R
+import com.wechantloup.upnpvideoplayer.UPnPApplication
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
 import com.wechantloup.upnpvideoplayer.videoPlayer.ControlsOverlay.ControlsOverlayListener
+import kotlinx.coroutines.launch
 import org.videolan.libvlc.LibVLC
 import org.videolan.libvlc.Media
 import org.videolan.libvlc.MediaPlayer
@@ -86,7 +89,10 @@ class VideoPlayerActivity : AppCompatActivity(), ControlsOverlayListener {
         val currentPosition = mMediaPlayer!!.time
         val currentTime = System.currentTimeMillis()
         val savableElement = VideoElement(current, currentPosition, currentTime)
-        // ToDo
+        lifecycleScope.launch {
+            Log.i("TEST", "Save an element")
+            (applicationContext as UPnPApplication).videoRepository.writeVideoElement(savableElement)
+        }
     }
 
     private fun finishWithResult() {
