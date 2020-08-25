@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.os.Handler
 import androidx.leanback.app.VerticalGridSupportFragment
 import androidx.leanback.widget.ArrayObjectAdapter
+import androidx.leanback.widget.ObjectAdapter
 import androidx.leanback.widget.VerticalGridPresenter
 import androidx.lifecycle.ViewModelProvider
 import com.wechantloup.upnpvideoplayer.UPnPApplication
@@ -20,7 +21,7 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
     private val videos = ArrayList<BrowsableVideoElement>()
     private var lastPlayedElement: BrowsableVideoElement? = null
     private val mHandler = Handler()
-
+    private lateinit var browsingAdapter: ArrayObjectAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,13 +65,17 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
         activity?.finish()
     }
 
+    override fun setAdapter(adapter: ObjectAdapter?) {
+        super.setAdapter(adapter)
+        browsingAdapter = adapter as ArrayObjectAdapter
+    }
+
     private fun setupFragment() {
         val gridPresenter = VerticalGridPresenter()
         gridPresenter.numberOfColumns = NUM_COLUMNS
         setGridPresenter(gridPresenter)
-        val mAdapter = ArrayObjectAdapter(CardPresenter())
+        adapter = ArrayObjectAdapter(CardPresenter())
 
-        adapter = mAdapter
         setOnSearchClickedListener {
             val intent = Intent(activity, MainActivity::class.java)
             startActivity(intent)
@@ -86,6 +91,12 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
             if (item.isDirectory) {
                 viewModel.parse(item)
             } else {
+                val startedVersion = item.hasBeenStarted()
+                startedVersion?.let {
+                    // ToDo
+                    viewModel.convertToBrowsableVideoElement(it)
+                    return
+                }
                 val index = videos.indexOf(item)
                 launch(videos, index, 0L)
             }
@@ -103,23 +114,22 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
     }
 
     override fun updateStarted(startedMovies: List<VideoElement>) {
-        val adapter = adapter as ArrayObjectAdapter
         var count = 0
-        while (count < adapter.size() && adapter[count] !is BrowsableVideoElement) {
+        while (count < browsingAdapter.size() && browsingAdapter[count] !is BrowsableVideoElement) {
             count++
         }
-        if (count == adapter.size()) return
-        adapter.removeItems(0, count)
-        adapter.addAll(0, startedMovies)
+        if (count == browsingAdapter.size()) return
+        browsingAdapter.removeItems(0, count)
+        browsingAdapter.addAll(0, startedMovies)
 
         val lastLine = startedMovies.size % NUM_COLUMNS
         if (lastLine > 0) {
             val rest = NUM_COLUMNS - lastLine
-            repeat(rest) { adapter.add(startedMovies.size, Any()) }
+            repeat(rest) { browsingAdapter.add(startedMovies.size, Any()) }
         }
 
         lastPlayedElement?.let { element ->
-            val pos = adapter.unmodifiableList<Any>().indexOfFirst {
+            val pos = browsingAdapter.unmodifiableList<Any>().indexOfFirst {
                 when (it) {
                     is VideoElement -> it.path == element.path
                     is BrowsableVideoElement -> it == element
@@ -182,6 +192,11 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
 
     private fun <E> ArrayObjectAdapter.addAll(items: Collection<E>) {
         addAll(size(), items)
+    }
+
+    private fun BrowsableVideoElement.hasBeenStarted(): VideoElement? {
+        val started = browsingAdapter.unmodifiableList<Any>().filterIsInstance<VideoElement>()
+        return started.firstOrNull { it.path == path }
     }
 
     companion object {
