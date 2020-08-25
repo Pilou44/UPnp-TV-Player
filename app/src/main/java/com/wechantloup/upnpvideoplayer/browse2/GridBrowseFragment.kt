@@ -1,5 +1,6 @@
 package com.wechantloup.upnpvideoplayer.browse2
 
+import android.app.Activity.RESULT_OK
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
@@ -17,6 +18,7 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
 
     private lateinit var viewModel: BrowseContract.ViewModel
     private val videos = ArrayList<BrowsableVideoElement>()
+    private var lastPlayedElement: BrowsableVideoElement? = null
     private val mHandler = Handler()
 
 
@@ -49,12 +51,8 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == MEDIA_PLAYER) {
-            val lastPlayedElement = data?.getParcelableExtra<BrowsableVideoElement>(VideoPlayerActivity.ELEMENT)
-            lastPlayedElement?.let {
-                val pos = (adapter as ArrayObjectAdapter).indexOf(it)
-                setSelectedPosition(pos)
-                showTitle(pos < NUM_COLUMNS)
-            }
+            if (resultCode == RESULT_OK)
+            lastPlayedElement = data?.getParcelableExtra(VideoPlayerActivity.ELEMENT)
         } else {
             super.onActivityResult(requestCode, resultCode, data)
         }
@@ -119,6 +117,19 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
             val rest = NUM_COLUMNS - lastLine
             repeat(rest) { adapter.add(startedMovies.size, Any()) }
         }
+
+        lastPlayedElement?.let { element ->
+            val pos = adapter.unmodifiableList<Any>().indexOfFirst {
+                when (it) {
+                    is VideoElement -> it.path == element.path
+                    is BrowsableVideoElement -> it == element
+                    else -> false
+                }
+            }
+            setSelectedPosition(pos)
+            showTitle(pos < NUM_COLUMNS)
+            lastPlayedElement = null
+        }
     }
 
     override fun displayContent(
@@ -152,12 +163,20 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
             videos.addAll(movies)
             adapter.addAll(movies)
 
-            var pos = 0
+            var pos = getInitialPosition(adapter)
             selectedElement?.let { pos = adapter.indexOf(it) }
             setSelectedPosition(pos)
             showTitle(pos < NUM_COLUMNS)
 
             this.adapter = adapter
+        }
+    }
+
+    private fun getInitialPosition(newAdapter: ArrayObjectAdapter): Int {
+        if (adapter.size() == 0) {
+            return 0
+        } else {
+            return newAdapter.unmodifiableList<Any>().indexOfFirst { it is BrowsableVideoElement }
         }
     }
 
