@@ -19,7 +19,7 @@ internal abstract class AppDatabase : RoomDatabase() {
         @Query("SELECT * FROM video WHERE id LIKE :id LIMIT 1")
         suspend fun findById(id: Long): VideoElement?
 
-        @Query("SELECT * FROM video")
+        @Query("SELECT * FROM video ORDER BY \"date\" DESC")
         suspend fun all(): List<VideoElement>
 
         @Insert(onConflict = OnConflictStrategy.IGNORE)
