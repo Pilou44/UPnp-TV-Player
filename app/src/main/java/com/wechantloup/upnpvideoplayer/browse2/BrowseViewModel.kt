@@ -60,6 +60,7 @@ internal class BrowseViewModel(
         }
 
         override fun onServiceDisconnected(className: ComponentName) {
+            Log.i(TAG, "Service disconnected")
             upnpService = null
         }
     }

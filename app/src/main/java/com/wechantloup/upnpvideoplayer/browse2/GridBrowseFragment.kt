@@ -24,7 +24,6 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
     private lateinit var viewModel: BrowseContract.ViewModel
     private val videos = ArrayList<BrowsableVideoElement>()
     private var lastPlayedElement: BrowsableVideoElement? = null
-    private val mHandler = Handler()
     private lateinit var browsingAdapter: ArrayObjectAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -183,37 +182,35 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
         movies: List<BrowsableVideoElement>,
         selectedElement: BrowsableVideoElement?
     ) {
-        mHandler.post {
-            this.title = title
-            val adapter = ArrayObjectAdapter(CardPresenter())
+        this.title = title
+        val adapter = ArrayObjectAdapter(CardPresenter())
 
-            adapter.addAll(startedMovies)
+        adapter.addAll(startedMovies)
 
-            var lastLine = startedMovies.size % NUM_COLUMNS
-            if (lastLine > 0) {
-                val rest = NUM_COLUMNS - lastLine
-                repeat(rest) { adapter.add(Any()) }
-            }
-
-            adapter.addAll(directories)
-
-            lastLine = directories.size % NUM_COLUMNS
-            if (lastLine > 0) {
-                val rest = NUM_COLUMNS - lastLine
-                repeat(rest) { adapter.add(Any()) }
-            }
-
-            videos.clear()
-            videos.addAll(movies)
-            adapter.addAll(movies)
-
-            var pos = getInitialPosition(adapter)
-            selectedElement?.let { pos = adapter.indexOf(it) }
-            setSelectedPosition(pos)
-            showTitle(pos < NUM_COLUMNS)
-
-            this.adapter = adapter
+        var lastLine = startedMovies.size % NUM_COLUMNS
+        if (lastLine > 0) {
+            val rest = NUM_COLUMNS - lastLine
+            repeat(rest) { adapter.add(Any()) }
         }
+
+        adapter.addAll(directories)
+
+        lastLine = directories.size % NUM_COLUMNS
+        if (lastLine > 0) {
+            val rest = NUM_COLUMNS - lastLine
+            repeat(rest) { adapter.add(Any()) }
+        }
+
+        videos.clear()
+        videos.addAll(movies)
+        adapter.addAll(movies)
+
+        var pos = getInitialPosition(adapter)
+        selectedElement?.let { pos = adapter.indexOf(it) }
+        setSelectedPosition(pos)
+        showTitle(pos < NUM_COLUMNS)
+
+        this.adapter = adapter
     }
 
     private fun getInitialPosition(newAdapter: ArrayObjectAdapter): Int {

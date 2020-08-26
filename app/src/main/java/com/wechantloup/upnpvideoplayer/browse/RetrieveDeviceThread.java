@@ -65,8 +65,6 @@ public class RetrieveDeviceThread extends Thread {
                 if (DEBUG)
                     Log.i(TAG, "Device not found");
                 mListener.onDeviceNotFound();
-//            } else {
-//                mListener.onDeviceFound(mDevice);
             }
         } catch (MalformedURLException | UnknownHostException | ValidationException | RouterException e) {
             Log.e(TAG, "Error while retrieving device");
