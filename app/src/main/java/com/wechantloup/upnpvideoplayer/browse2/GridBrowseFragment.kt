@@ -3,9 +3,9 @@ package com.wechantloup.upnpvideoplayer.browse2
 import android.app.Activity.RESULT_OK
 import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
 import androidx.leanback.app.VerticalGridSupportFragment
 import androidx.leanback.widget.ArrayObjectAdapter
+import androidx.leanback.widget.FocusHighlight
 import androidx.leanback.widget.ObjectAdapter
 import androidx.leanback.widget.VerticalGridPresenter
 import androidx.lifecycle.ViewModelProvider
@@ -88,7 +88,7 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
     }
 
     private fun setupFragment() {
-        val gridPresenter = VerticalGridPresenter()
+        val gridPresenter = VerticalGridPresenter(FocusHighlight.ZOOM_FACTOR_LARGE, false)
         gridPresenter.numberOfColumns = NUM_COLUMNS
         setGridPresenter(gridPresenter)
         adapter = ArrayObjectAdapter(CardPresenter())

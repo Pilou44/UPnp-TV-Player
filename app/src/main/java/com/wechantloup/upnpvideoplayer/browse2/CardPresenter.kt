@@ -1,18 +1,16 @@
 package com.wechantloup.upnpvideoplayer.browse2
 
+import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.text.TextUtils
-import androidx.leanback.widget.ImageCardView
-import androidx.leanback.widget.Presenter
-import androidx.core.content.ContextCompat
 import android.util.Log
-import android.view.View.GONE
-import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.TextView
-
+import androidx.core.content.ContextCompat
+import androidx.leanback.widget.ImageCardView
+import androidx.leanback.widget.Presenter
 import com.wechantloup.upnpvideoplayer.R
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
@@ -46,7 +44,7 @@ class CardPresenter : Presenter() {
                     titleView.ellipsize = TextUtils.TruncateAt.END
                 }
 
-                updateCardBackgroundColor(this, selected)
+                updateCardBackgroundColor(this, false, selected)
                 super.setSelected(selected)
             }
         }
@@ -55,7 +53,6 @@ class CardPresenter : Presenter() {
         params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
         titleView.layoutParams = params
 
-        updateCardBackgroundColor(cardView, false)
         return ViewHolder(cardView)
     }
 
@@ -63,13 +60,10 @@ class CardPresenter : Presenter() {
         Log.d(TAG, "onBindViewHolder")
         val cardView = viewHolder.view as ImageCardView
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
-        val mainImage = cardView.findViewById<ImageView>(R.id.main_image)
-        val info = cardView.findViewById<RelativeLayout>(R.id.info_field)
         if (item is BrowsableVideoElement) {
-            mainImage.visibility = VISIBLE
-            info.visibility = VISIBLE
             cardView.isFocusable = true
             cardView.isFocusableInTouchMode = true
+            updateCardBackgroundColor(cardView, false, false)
 
 //        if (movie.cardImageUrl != null) {
             cardView.titleText = item.name
@@ -87,10 +81,9 @@ class CardPresenter : Presenter() {
 //                .into(cardView.mainImageView)
 //        }
         } else if (item is VideoElement) {
-            mainImage.visibility = VISIBLE
-            info.visibility = VISIBLE
             cardView.isFocusable = true
             cardView.isFocusableInTouchMode = true
+            updateCardBackgroundColor(cardView, false, false)
 
 //        if (movie.cardImageUrl != null) {
             cardView.titleText = item.name
@@ -102,11 +95,10 @@ class CardPresenter : Presenter() {
 //                .into(cardView.mainImageView)
 //        }
         } else {
-            mainImage.visibility = GONE
-            info.visibility = GONE
             cardView.titleText = null
             cardView.isFocusable = false
             cardView.isFocusableInTouchMode = false
+            updateCardBackgroundColor(cardView, true, false)
         }
     }
 
@@ -118,8 +110,12 @@ class CardPresenter : Presenter() {
         cardView.mainImage = null
     }
 
-    private fun updateCardBackgroundColor(view: ImageCardView, selected: Boolean) {
-        val color = if (selected) sSelectedBackgroundColor else sDefaultBackgroundColor
+    private fun updateCardBackgroundColor(view: ImageCardView, empty: Boolean, selected: Boolean) {
+        val color = when {
+            empty -> Color.TRANSPARENT
+            selected -> sSelectedBackgroundColor
+            else -> sDefaultBackgroundColor
+        }
         // Both background colors should be set because the view's background is temporarily visible
         // during animations.
         view.setBackgroundColor(color)
