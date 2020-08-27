@@ -3,4 +3,15 @@
     <dimen name="double_margin">48dp</dimen>
     <dimen name="global_margin">24dp</dimen>
     <dimen name="half_margin">12dp</dimen>
+    <dimen name="quarter_margin">6dp</dimen>
+
+    <!-- BasicCardView -->
+    <dimen name="lb_basic_card_main_width">140dp</dimen>
+    <dimen name="lb_basic_card_main_height">188dp</dimen>
+    <dimen name="lb_basic_card_info_height">52dp</dimen>
+    <dimen name="lb_basic_card_info_padding">6dp</dimen>
+    <dimen name="lb_basic_card_info_text_margin">2dp</dimen>
+    <dimen name="lb_basic_card_title_text_size">16sp</dimen>
+    <dimen name="lb_basic_card_content_text_size">12sp</dimen>
+    <dimen name="lb_basic_card_info_badge_size">16dp</dimen>
 </resources>

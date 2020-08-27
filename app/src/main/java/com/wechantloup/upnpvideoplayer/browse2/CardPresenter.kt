@@ -2,18 +2,14 @@ package com.wechantloup.upnpvideoplayer.browse2
 
 import android.graphics.Color
 import android.graphics.drawable.Drawable
-import android.text.TextUtils
 import android.util.Log
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.RelativeLayout
-import android.widget.TextView
 import androidx.core.content.ContextCompat
-import androidx.leanback.widget.ImageCardView
 import androidx.leanback.widget.Presenter
 import com.wechantloup.upnpvideoplayer.R
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
+import com.wechantloup.upnpvideoplayer.widgets.BrowsingCardView
 import kotlin.properties.Delegates
 
 /**
@@ -33,45 +29,32 @@ class CardPresenter : Presenter() {
         sSelectedBackgroundColor = ContextCompat.getColor(parent.context, R.color.selected_background)
         mDefaultCardImage = ContextCompat.getDrawable(parent.context, R.drawable.movie)
 
-        val cardView = object : ImageCardView(parent.context) {
+        val cardView = object : BrowsingCardView(parent.context) {
             override fun setSelected(selected: Boolean) {
-                val titleView = findViewById<TextView>(R.id.title_text)
-                if (selected) {
-                    titleView.ellipsize = TextUtils.TruncateAt.MARQUEE
-                    titleView.marqueeRepeatLimit = -1
-                    titleView.isSingleLine = true
-                } else {
-                    titleView.ellipsize = TextUtils.TruncateAt.END
-                }
-
-                updateCardBackgroundColor(this, false, selected)
                 super.setSelected(selected)
+                updateCardBackgroundColor(this, false, selected)
             }
         }
-        val titleView = cardView.findViewById<TextView>(R.id.title_text)
-        val params = titleView.layoutParams as RelativeLayout.LayoutParams
-        params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
-        titleView.layoutParams = params
 
         return ViewHolder(cardView)
     }
 
     override fun onBindViewHolder(viewHolder: ViewHolder, item: Any) {
         Log.d(TAG, "onBindViewHolder")
-        val cardView = viewHolder.view as ImageCardView
-        cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
+        val cardView = viewHolder.view as BrowsingCardView
+
         if (item is BrowsableVideoElement) {
             cardView.isFocusable = true
             cardView.isFocusableInTouchMode = true
-            updateCardBackgroundColor(cardView, false, false)
+            updateCardBackgroundColor(cardView, empty = false, selected = false)
 
 //        if (movie.cardImageUrl != null) {
-            cardView.titleText = item.name
+            cardView.setTitleText(item.name)
 //            cardView.contentText = movie.studio
             if (item.isDirectory) {
-                cardView.mainImageView.apply {
-                    scaleType = ImageView.ScaleType.FIT_CENTER
-                    setImageResource(R.drawable.ic_directory)
+                cardView.apply {
+//                    scaleType = ImageView.ScaleType.FIT_CENTER
+                    setMainImage(R.drawable.ic_folder)
                 }
             }
 //            Glide.with(viewHolder.view.context)
@@ -83,10 +66,10 @@ class CardPresenter : Presenter() {
         } else if (item is VideoElement) {
             cardView.isFocusable = true
             cardView.isFocusableInTouchMode = true
-            updateCardBackgroundColor(cardView, false, false)
+            updateCardBackgroundColor(cardView, empty = false, selected = false)
 
 //        if (movie.cardImageUrl != null) {
-            cardView.titleText = item.name
+            cardView.setTitleText(item.name)
 //            cardView.contentText = movie.studio
 //            Glide.with(viewHolder.view.context)
 //                .load(movie.cardImageUrl)
@@ -95,22 +78,22 @@ class CardPresenter : Presenter() {
 //                .into(cardView.mainImageView)
 //        }
         } else {
-            cardView.titleText = null
+            cardView.setTitleText(null)
             cardView.isFocusable = false
             cardView.isFocusableInTouchMode = false
-            updateCardBackgroundColor(cardView, true, false)
+            updateCardBackgroundColor(cardView, empty = true, selected = false)
         }
     }
 
-    override fun onUnbindViewHolder(viewHolder: Presenter.ViewHolder) {
+    override fun onUnbindViewHolder(viewHolder: ViewHolder) {
         Log.d(TAG, "onUnbindViewHolder")
-        val cardView = viewHolder.view as ImageCardView
+        val cardView = viewHolder.view as BrowsingCardView
         // Remove references to images so that the garbage collector can free up memory
-        cardView.badgeImage = null
-        cardView.mainImage = null
+//        cardView.setBadgeImage(null)
+        cardView.setMainImage(null)
     }
 
-    private fun updateCardBackgroundColor(view: ImageCardView, empty: Boolean, selected: Boolean) {
+    private fun updateCardBackgroundColor(view: BrowsingCardView, empty: Boolean, selected: Boolean) {
         val color = when {
             empty -> Color.TRANSPARENT
             selected -> sSelectedBackgroundColor
@@ -119,13 +102,10 @@ class CardPresenter : Presenter() {
         // Both background colors should be set because the view's background is temporarily visible
         // during animations.
         view.setBackgroundColor(color)
-        view.setInfoAreaBackgroundColor(color)
+//        view.setInfoAreaBackgroundColor(color)
     }
 
     companion object {
-        private val TAG = "CardPresenter"
-
-        private val CARD_WIDTH = 313
-        private val CARD_HEIGHT = 176
+        private val TAG = CardPresenter::class.java.simpleName
     }
 }

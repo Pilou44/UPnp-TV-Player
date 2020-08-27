@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:lb="http://schemas.android.com/apk/res-auto">
+
+    <ImageView
+        android:id="@+id/image"
+        android:layout_width="156.5dp"
+        android:layout_height="88dp"
+        android:scaleType="fitCenter"
+        lb:layout_constraintBottom_toTopOf="@id/title"
+        lb:layout_constraintEnd_toEndOf="parent"
+        lb:layout_constraintStart_toStartOf="parent"
+        lb:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/sub_image"
+        android:layout_width="0dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="17.5dp"
+        lb:layout_constraintBottom_toBottomOf="@id/image"
+        lb:layout_constraintDimensionRatio="1.88"
+        lb:layout_constraintEnd_toEndOf="@id/image"
+        lb:layout_constraintStart_toStartOf="@id/image"
+        lb:layout_constraintTop_toTopOf="@id/image" />
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:paddingStart="@dimen/half_margin"
+        android:paddingTop="@dimen/quarter_margin"
+        android:paddingEnd="@dimen/half_margin"
+        android:paddingBottom="@dimen/quarter_margin"
+        android:singleLine="true"
+        lb:layout_constraintBottom_toBottomOf="parent"
+        lb:layout_constraintEnd_toEndOf="parent"
+        lb:layout_constraintStart_toStartOf="parent"
+        lb:layout_constraintTop_toBottomOf="@id/image" />
+</merge>
