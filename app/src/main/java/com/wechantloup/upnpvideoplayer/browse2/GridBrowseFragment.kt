@@ -3,6 +3,7 @@ package com.wechantloup.upnpvideoplayer.browse2
 import android.app.Activity.RESULT_OK
 import android.content.Intent
 import android.os.Bundle
+import android.view.KeyEvent
 import androidx.leanback.app.VerticalGridSupportFragment
 import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.FocusHighlight
@@ -237,6 +238,12 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
     private fun BrowsableVideoElement.hasBeenStarted(): StartedVideoElement? {
         val started = browsingAdapter.unmodifiableList<Any>().filterIsInstance<StartedVideoElement>()
         return started.firstOrNull { it.path == path }
+    }
+
+    fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if (keyCode != KeyEvent.KEYCODE_MENU) return false
+        // ToDo
+        return false
     }
 
     companion object {
