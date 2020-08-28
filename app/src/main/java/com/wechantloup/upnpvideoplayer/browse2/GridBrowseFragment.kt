@@ -176,10 +176,12 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
     }
 
     override fun refreshItem(item: Any) {
-        val index = browsingAdapter.indexOf(item)
-        if (index >= 0) {
-            browsingAdapter.notifyArrayItemRangeChanged(index, 1)
-        }
+        activity?.runOnUiThread(Runnable {
+            val index = browsingAdapter.indexOf(item)
+            if (index >= 0) {
+                browsingAdapter.notifyArrayItemRangeChanged(index, 1)
+            }
+        })
     }
 
     override fun displayContent(
