@@ -39,6 +39,7 @@ import org.fourthline.cling.registry.Registry
 import org.fourthline.cling.support.contentdirectory.callback.Browse
 import org.fourthline.cling.support.model.BrowseFlag
 import org.fourthline.cling.support.model.DIDLContent
+import java.lang.NumberFormatException
 import java.lang.RuntimeException
 
 internal class BrowseViewModel(
@@ -180,7 +181,10 @@ internal class BrowseViewModel(
             val mmr = MediaMetadataRetriever()
             try {
                 mmr.setDataSource(element.path, HashMap<String, String>())
-                bitmap = mmr.getFrameAtTime(2000000, MediaMetadataRetriever.OPTION_CLOSEST) // frame at 20 seconds
+                val duration: String? = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+                val timeToCatch = extractTimeToCapture(duration)
+                bitmap = mmr.getFrameAtTime(timeToCatch * 1000, MediaMetadataRetriever.OPTION_CLOSEST)
+                Log.i("MMR", "For item ${element.name}: duration = $duration, bitmap is null: ${bitmap == null}")
             } catch (e: RuntimeException) {
                 e.printStackTrace()
             } finally {
@@ -191,6 +195,20 @@ internal class BrowseViewModel(
                 view.refreshItem(element)
             }
         }
+    }
+
+    private fun extractTimeToCapture(duration: String?): Long {
+        if (duration == null) return DEFAULT_TIME_TO_CAPTURE
+
+        var longDuration = -1L
+        try {
+            longDuration = duration.toLong()
+        } catch (e: NumberFormatException) {
+            return DEFAULT_TIME_TO_CAPTURE
+        }
+        if (longDuration < 0L) return DEFAULT_TIME_TO_CAPTURE
+
+        return longDuration * 100L / PERCENT_FOR_CAPTURE
     }
 
     private fun deviceAdded(device: Device<*, *, *>) {
@@ -342,5 +360,7 @@ internal class BrowseViewModel(
 
     companion object {
         private val TAG = BrowseViewModel::class.java.simpleName
+        private const val DEFAULT_TIME_TO_CAPTURE: Long = 20000L // 20s
+        private const val PERCENT_FOR_CAPTURE: Long = 25L // 25%
     }
 }
