@@ -2,10 +2,12 @@ package com.wechantloup.upnpvideoplayer.browse2
 
 import android.graphics.Color
 import android.graphics.drawable.Drawable
+import android.net.Uri
 import android.util.Log
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.Presenter
+import com.bumptech.glide.Glide
 import com.wechantloup.upnpvideoplayer.R
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
@@ -16,7 +18,7 @@ import kotlin.properties.Delegates
  * A CardPresenter is used to generate Views and bind Objects to them on demand.
  * It contains an ImageCardView.
  */
-class CardPresenter : Presenter() {
+internal class CardPresenter(private val viewModel: BrowseContract.ViewModel) : Presenter() {
 
     private var mDefaultCardImage: Drawable? = null
     private var sSelectedBackgroundColor: Int by Delegates.notNull()
@@ -56,13 +58,19 @@ class CardPresenter : Presenter() {
 //                    scaleType = ImageView.ScaleType.FIT_CENTER
                     setMainImage(R.drawable.ic_folder)
                 }
+            } else {
+                val fileName = item.path.substring(item.path.lastIndexOf("/") + 1)
+                Log.d(TAG, "Find image for $fileName")
+
+                val uri = viewModel.getThumbnail(item)
+                uri?.let {
+                    Glide.with(viewHolder.view.context)
+                        .load(uri)
+                        .centerCrop()
+                        .error(mDefaultCardImage)
+                        .into(cardView.getMainImageView())
+                }
             }
-//            Glide.with(viewHolder.view.context)
-//                .load(movie.cardImageUrl)
-//                .centerCrop()
-//                .error(mDefaultCardImage)
-//                .into(cardView.mainImageView)
-//        }
         } else if (item is VideoElement) {
             cardView.isFocusable = true
             cardView.isFocusableInTouchMode = true

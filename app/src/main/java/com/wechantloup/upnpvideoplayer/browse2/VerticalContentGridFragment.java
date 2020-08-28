@@ -61,14 +61,14 @@ public class VerticalContentGridFragment extends VerticalGridFragment {
         gridPresenter.setNumberOfColumns(NUM_COLUMNS);
         setGridPresenter(gridPresenter);
 
-        ArrayObjectAdapter mAdapter = new ArrayObjectAdapter(new CardPresenter());
+//        ArrayObjectAdapter mAdapter = new ArrayObjectAdapter(new CardPresenter());
 
 //        ContentContainer contentContainer = ContentBrowser.getInstance(getActivity())
 //                                                          .getLastSelectedContentContainer();
 //        for (Content content : contentContainer) {
 //            mAdapter.add(content);
 //        }
-        setAdapter(mAdapter);
+//        setAdapter(mAdapter);
 
 //        setOnItemViewClickedListener((itemViewHolder, item, rowViewHolder, row) -> {
 //            Log.i(TAG, "item clicked: " + ((Content) item).getTitle());

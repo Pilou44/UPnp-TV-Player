@@ -4,6 +4,9 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.graphics.Bitmap
+import android.media.MediaMetadataRetriever
+import android.net.Uri
 import android.os.IBinder
 import android.preference.PreferenceManager
 import android.util.Log
@@ -14,9 +17,12 @@ import com.wechantloup.upnpvideoplayer.browse.RetrieveDeviceThreadListener
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.DlnaRoot
 import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
+import com.wechantloup.upnpvideoplayer.data.repository.CacheRepository
 import com.wechantloup.upnpvideoplayer.data.repository.VideoRepository
 import com.wechantloup.upnpvideoplayer.utils.Serializer.deserialize
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.fourthline.cling.android.AndroidUpnpService
@@ -32,9 +38,11 @@ import org.fourthline.cling.registry.Registry
 import org.fourthline.cling.support.contentdirectory.callback.Browse
 import org.fourthline.cling.support.model.BrowseFlag
 import org.fourthline.cling.support.model.DIDLContent
+import java.lang.RuntimeException
 
 internal class BrowseViewModel(
-    private val videoRepository: VideoRepository
+    private val videoRepository: VideoRepository,
+    private val cacheRepository: CacheRepository
 ) : ViewModel(), BrowseContract.ViewModel, RetrieveDeviceThreadListener {
 
     private lateinit var view: BrowseContract.View
@@ -48,6 +56,14 @@ internal class BrowseViewModel(
     private var upnpService: AndroidUpnpService? = null
     private val registryListener: BrowseRegistryListener =
         BrowseRegistryListener(::deviceAdded)
+
+    private val requestChannel: Channel<BrowsableVideoElement> = Channel()
+
+    init {
+        viewModelScope.launch {
+            requestChannel.consumeEach { retrieveThumbnail(it) }
+        }
+    }
 
     private val mServiceConnection: ServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
@@ -140,6 +156,41 @@ internal class BrowseViewModel(
                     override fun updateStatus(status: Status) {}
                     override fun failure(arg0: ActionInvocation<*>?, arg1: UpnpResponse, arg2: String) {}
                 })
+        }
+    }
+
+    override fun getThumbnail(item: BrowsableVideoElement): Uri? {
+        val fileName = item.path.substring(item.path.lastIndexOf("/") + 1)
+        val uri: Uri? = cacheRepository.getBitmapUri(fileName)
+        uri?.let { return it }
+        viewModelScope.launch {
+            requestChannel.send(item)
+        }
+        Log.i(TAG, "Return null for $fileName")
+        return null
+    }
+
+    private suspend fun retrieveThumbnail(item: BrowsableVideoElement) {
+        val fileName = item.path.substring(item.path.lastIndexOf("/") + 1)
+        val uri: Uri? = cacheRepository.getBitmapUri(fileName)
+        uri?.let { return }
+
+        var bitmap: Bitmap? = null
+        Log.i(TAG, "Launch coroutine for $fileName with path ${item.path}")
+        withContext(Dispatchers.IO) {
+            val mmr = MediaMetadataRetriever()
+            try {
+                mmr.setDataSource(item.path, HashMap<String, String>())
+                bitmap = mmr.getFrameAtTime(20000000, MediaMetadataRetriever.OPTION_CLOSEST) // frame at 20 seconds
+            } catch (e: RuntimeException) {
+                e.printStackTrace()
+            } finally {
+                mmr.release()
+            }
+            bitmap?.let {
+                cacheRepository.writeFile(it, fileName)
+                view.refreshItem(item)
+            }
         }
     }
 

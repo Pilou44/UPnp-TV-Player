@@ -1,6 +1,7 @@
 package com.wechantloup.upnpvideoplayer.browse2
 
 import android.content.Context
+import android.net.Uri
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
 
@@ -20,6 +21,7 @@ internal interface BrowseContract {
         )
 
         fun updateStarted(startedMovies: List<VideoElement>)
+        fun refreshItem(item: BrowsableVideoElement)
     }
 
     interface ViewModel {
@@ -29,5 +31,6 @@ internal interface BrowseContract {
         fun parse(item: BrowsableVideoElement)
         fun goBack(): Boolean
         fun convertToBrowsableVideoElement(item: VideoElement)
+        fun getThumbnail(item: BrowsableVideoElement): Uri?
     }
 }

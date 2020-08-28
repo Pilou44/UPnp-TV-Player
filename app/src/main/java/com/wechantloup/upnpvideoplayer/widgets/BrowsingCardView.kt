@@ -47,4 +47,7 @@ open class BrowsingCardView(context: Context) : ConstraintLayout(context) {
         imageView.setImageDrawable(image)
     }
 
+    fun getMainImageView(): ImageView {
+        return imageView
+    }
 }

@@ -91,7 +91,7 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
         val gridPresenter = VerticalGridPresenter(FocusHighlight.ZOOM_FACTOR_LARGE, false)
         gridPresenter.numberOfColumns = NUM_COLUMNS
         setGridPresenter(gridPresenter)
-        adapter = ArrayObjectAdapter(CardPresenter())
+        adapter = ArrayObjectAdapter(CardPresenter(viewModel))
 
         setOnSearchClickedListener {
             val intent = Intent(activity, MainActivity::class.java)
@@ -175,6 +175,11 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
         }
     }
 
+    override fun refreshItem(item: BrowsableVideoElement) {
+        val index = browsingAdapter.indexOf(item)
+        browsingAdapter.notifyArrayItemRangeChanged(index, 1)
+    }
+
     override fun displayContent(
         title: String,
         startedMovies: List<VideoElement>,
@@ -183,7 +188,7 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
         selectedElement: BrowsableVideoElement?
     ) {
         this.title = title
-        val adapter = ArrayObjectAdapter(CardPresenter())
+        val adapter = ArrayObjectAdapter(CardPresenter(viewModel))
 
         adapter.addAll(startedMovies)
 
