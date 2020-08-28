@@ -4,9 +4,11 @@ import android.os.Bundle
 import android.view.KeyEvent
 import androidx.fragment.app.FragmentActivity
 import com.wechantloup.upnpvideoplayer.R
+import com.wechantloup.upnpvideoplayer.dialog.DialogFragment
 
 class SuperBrowseActivity : FragmentActivity() {
 
+    private val DIALOG_FRAGMENT: String = "dialog_fragment"
     private lateinit var fragment: GridBrowseFragment
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -22,5 +24,18 @@ class SuperBrowseActivity : FragmentActivity() {
 
     override fun onBackPressed() {
         fragment.onBackPressed()
+    }
+
+    fun showDialog(params: DialogFragment.Params) {
+        val dialogFragment: DialogFragment = DialogFragment()
+        dialogFragment.bind(params)
+        supportFragmentManager.beginTransaction().add(android.R.id.content, dialogFragment, DIALOG_FRAGMENT).commit()
+    }
+
+    fun removeDialog() {
+        val dialogFragment = supportFragmentManager.findFragmentByTag(DIALOG_FRAGMENT)
+        dialogFragment?.let {
+            supportFragmentManager.beginTransaction().remove(dialogFragment).commit()
+        }
     }
 }

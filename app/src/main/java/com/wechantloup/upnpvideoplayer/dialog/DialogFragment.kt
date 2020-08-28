@@ -1,17 +1,19 @@
 package com.wechantloup.upnpvideoplayer.dialog
 
-import android.content.Intent
 import android.os.Bundle
+import androidx.annotation.StringRes
 import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.widget.GuidanceStylist.Guidance
 import androidx.leanback.widget.GuidedAction
-import com.wechantloup.upnpvideoplayer.dialog.DialogActivity.Companion.ACTION_ID_NEGATIVE
-import com.wechantloup.upnpvideoplayer.dialog.DialogActivity.Companion.ACTION_ID_POSITIVE
-import com.wechantloup.upnpvideoplayer.utils.Serializer.deserialize
+import com.wechantloup.upnpvideoplayer.browse2.SuperBrowseActivity
 
 class DialogFragment : GuidedStepSupportFragment() {
 
-    private lateinit var params: DialogActivity.Params
+    private lateinit var params: Params
+
+    fun bind(params: Params) {
+        this.params = params
+    }
 
     override fun onCreateGuidance(savedInstanceState: Bundle?): Guidance {
         return Guidance(
@@ -25,22 +27,31 @@ class DialogFragment : GuidedStepSupportFragment() {
         actions: MutableList<GuidedAction?>,
         savedInstanceState: Bundle?
     ) {
-        val serializedParams = requireNotNull(arguments?.getString(DialogActivity.EXTRA_PARAMS))
-        params = serializedParams.deserialize()
-        var action = GuidedAction.Builder(context)
-            .id(ACTION_ID_POSITIVE.toLong())
-            .title(getString(params.positiveButton)).build()
-        actions.add(action)
-        action = GuidedAction.Builder(context)
-            .id(ACTION_ID_NEGATIVE.toLong())
-            .title(getString(params.negativeButton)).build()
-        actions.add(action)
+        for (option in params.options) {
+            val action = GuidedAction.Builder(context)
+                .id(params.options.indexOf(option).toLong())
+                .title(getString(option.text)).build()
+            actions.add(action)
+        }
     }
 
     override fun onGuidedActionClicked(action: GuidedAction) {
-        val activity = requireActivity()
-        val returnIntent = Intent()
-        activity.setResult(action.id.toInt(), returnIntent)
-        activity.finish()
+        (activity as? SuperBrowseActivity)?.let {
+            val option = params.options[action.id.toInt()]
+            option.action()
+            it.removeDialog()
+            return
+        }
     }
+
+    class Option(
+        @StringRes val text: Int,
+        val action: () -> Unit
+    )
+
+    class Params(
+        @StringRes val title: Int,
+        @StringRes val message: Int,
+        val options: List<Option>
+    )
 }

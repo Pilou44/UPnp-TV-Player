@@ -14,14 +14,12 @@ import com.wechantloup.upnpvideoplayer.R
 import com.wechantloup.upnpvideoplayer.UPnPApplication
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
-import com.wechantloup.upnpvideoplayer.dialog.DialogActivity
+import com.wechantloup.upnpvideoplayer.dialog.DialogFragment
 import com.wechantloup.upnpvideoplayer.main.MainActivity
 import com.wechantloup.upnpvideoplayer.videoPlayer.VideoPlayerActivity
 
 class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
 
-    private var dialogDisplayed: Boolean = false
-    private var pendingElement: StartedVideoElement? = null
     private lateinit var viewModel: BrowseContract.ViewModel
     private val videos = ArrayList<BrowsableVideoElement>()
     private var lastPlayedElement: BrowsableVideoElement? = null
@@ -46,32 +44,18 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
 
     override fun onResume() {
         super.onResume()
-        if (!dialogDisplayed) {
-            viewModel.onViewResumed(requireContext())
-        }
-        dialogDisplayed = false
+        viewModel.onViewResumed(requireContext())
     }
 
     override fun onPause() {
         super.onPause()
-        if (!dialogDisplayed) {
-            viewModel.onViewPaused(requireContext())
-        }
+        viewModel.onViewPaused(requireContext())
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == REQUEST_MEDIA_PLAYER) {
             if (resultCode == RESULT_OK)
                 lastPlayedElement = data?.getParcelableExtra(VideoPlayerActivity.ELEMENT)
-        } else if (requestCode == REQUEST_DIALOG_STARTED_ELEMENT) {
-            pendingElement?.let {
-                if (resultCode == DialogActivity.ACTION_ID_POSITIVE) {
-                    launchAndContinue(it)
-                } else {
-                    launchFromStart(it)
-                }
-                pendingElement = null
-            }
         } else {
             super.onActivityResult(requestCode, resultCode, data)
         }
@@ -109,17 +93,17 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
             if (item.isDirectory) {
                 viewModel.parse(item)
             } else {
-                pendingElement = item.hasBeenStarted()
+                val pendingElement = item.hasBeenStarted()
                 pendingElement?.let {
-                    val params = DialogActivity.Params(
-                        REQUEST_DIALOG_STARTED_ELEMENT,
+                    val option1 = DialogFragment.Option(R.string.restart_dialog_button_positive) { launchAndContinue(it) }
+                    val option2 = DialogFragment.Option(R.string.restart_dialog_button_negative) { launchFromStart(it)}
+                    val optionList = listOf(option1, option2)
+                    val params = DialogFragment.Params(
                         R.string.restart_dialog_title,
                         R.string.restart_dialog_description,
-                        R.string.restart_dialog_button_positive,
-                        R.string.restart_dialog_button_negative
+                        optionList
                     )
-                    dialogDisplayed = true
-                    DialogActivity.launch(this, params)
+                    (activity as SuperBrowseActivity).showDialog(params)
                     return
                 }
                 val index = videos.indexOf(item)
@@ -177,12 +161,12 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
     }
 
     override fun refreshItem(item: Any) {
-        activity?.runOnUiThread(Runnable {
+        activity?.runOnUiThread {
             val index = browsingAdapter.indexOf(item)
             if (index >= 0) {
                 browsingAdapter.notifyArrayItemRangeChanged(index, 1)
             }
-        })
+        }
     }
 
     override fun displayContent(
@@ -224,10 +208,10 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
     }
 
     private fun getInitialPosition(newAdapter: ArrayObjectAdapter): Int {
-        if (adapter.size() == 0) {
-            return 0
+        return if (adapter.size() == 0) {
+            0
         } else {
-            return newAdapter.unmodifiableList<Any>().indexOfFirst { it is BrowsableVideoElement }
+            newAdapter.unmodifiableList<Any>().indexOfFirst { it is BrowsableVideoElement }
         }
     }
 
@@ -250,6 +234,5 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
         private val TAG = GridBrowseFragment::class.java.simpleName
         private const val NUM_COLUMNS = 5
         private const val REQUEST_MEDIA_PLAYER = 2911
-        private const val REQUEST_DIALOG_STARTED_ELEMENT = 1507
     }
 }
