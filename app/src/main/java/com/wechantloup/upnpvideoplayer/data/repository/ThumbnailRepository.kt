@@ -4,19 +4,17 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.media.ThumbnailUtils
 import android.net.Uri
+import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
 import java.io.File
 import java.io.FileOutputStream
 
-class CacheRepository(context: Context) {
+class ThumbnailRepository(context: Context) {
 
-    val root: File = requireNotNull(context.externalCacheDir)
+    private val root: File = requireNotNull(context.externalCacheDir)
 
-    fun writeFile(bitmap: Bitmap, fileName: String) {
-//        root.mkdirs()
-        val imageFile = File(root, "$fileName.jpg")
-//        if (!imageFile.exists()) {
-//            imageFile.createNewFile()
-//        }
+    fun writeElementThumbnail(bitmap: Bitmap, element: VideoElement) {
+        val fileName = extractFileName(element.path)
+        val imageFile = File(root, fileName)
         val bmp = ThumbnailUtils.extractThumbnail(bitmap, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, ThumbnailUtils.OPTIONS_RECYCLE_INPUT)
         val fos = FileOutputStream(imageFile)
         bmp.compress(Bitmap.CompressFormat.JPEG, 30, fos)
@@ -24,13 +22,17 @@ class CacheRepository(context: Context) {
         bmp.recycle()
     }
 
-    fun getBitmapUri(fileName: String): Uri? {
-        val imageFile = File(root, "$fileName.jpg")
+    fun getElementThumbnail(element: VideoElement): Uri? {
+        val fileName = extractFileName(element.path)
+        val imageFile = File(root, fileName)
 
         if (!imageFile.exists()) return null
 
         return Uri.fromFile(imageFile)
     }
+
+    private fun extractFileName(path: String) =
+        "${path.substring(path.lastIndexOf("/") + 1)}.jpg"
 
     companion object {
         private const val THUMBNAIL_WIDTH = 313

@@ -16,8 +16,9 @@ import com.wechantloup.upnpvideoplayer.browse.RetrieveDeviceThread
 import com.wechantloup.upnpvideoplayer.browse.RetrieveDeviceThreadListener
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.DlnaRoot
+import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
-import com.wechantloup.upnpvideoplayer.data.repository.CacheRepository
+import com.wechantloup.upnpvideoplayer.data.repository.ThumbnailRepository
 import com.wechantloup.upnpvideoplayer.data.repository.VideoRepository
 import com.wechantloup.upnpvideoplayer.utils.Serializer.deserialize
 import kotlinx.coroutines.Dispatchers
@@ -42,7 +43,7 @@ import java.lang.RuntimeException
 
 internal class BrowseViewModel(
     private val videoRepository: VideoRepository,
-    private val cacheRepository: CacheRepository
+    private val thumbnailRepository: ThumbnailRepository
 ) : ViewModel(), BrowseContract.ViewModel, RetrieveDeviceThreadListener {
 
     private lateinit var view: BrowseContract.View
@@ -57,7 +58,7 @@ internal class BrowseViewModel(
     private val registryListener: BrowseRegistryListener =
         BrowseRegistryListener(::deviceAdded)
 
-    private val requestChannel: Channel<BrowsableVideoElement> = Channel()
+    private val requestChannel: Channel<VideoElement> = Channel()
 
     init {
         viewModelScope.launch {
@@ -119,7 +120,7 @@ internal class BrowseViewModel(
         return true
     }
 
-    override fun convertToBrowsableVideoElement(item: VideoElement) {
+    override fun convertToBrowsableVideoElement(item: StartedVideoElement) {
         viewModelScope.launch {
             videoRepository.removeVideo(item)
             upnpService?.controlPoint
@@ -159,37 +160,35 @@ internal class BrowseViewModel(
         }
     }
 
-    override fun getThumbnail(item: BrowsableVideoElement): Uri? {
-        val fileName = item.path.substring(item.path.lastIndexOf("/") + 1)
-        val uri: Uri? = cacheRepository.getBitmapUri(fileName)
+    override fun getThumbnail(item: VideoElement): Uri? {
+        val uri: Uri? = thumbnailRepository.getElementThumbnail(item)
         uri?.let { return it }
         viewModelScope.launch {
             requestChannel.send(item)
         }
-        Log.i(TAG, "Return null for $fileName")
+        Log.i(TAG, "Return null for ${item.name}")
         return null
     }
 
-    private suspend fun retrieveThumbnail(item: BrowsableVideoElement) {
-        val fileName = item.path.substring(item.path.lastIndexOf("/") + 1)
-        val uri: Uri? = cacheRepository.getBitmapUri(fileName)
+    private suspend fun retrieveThumbnail(element: VideoElement) {
+        val uri: Uri? = thumbnailRepository.getElementThumbnail(element)
         uri?.let { return }
 
         var bitmap: Bitmap? = null
-        Log.i(TAG, "Launch coroutine for $fileName with path ${item.path}")
+        Log.i(TAG, "Launch coroutine for ${element.name}")
         withContext(Dispatchers.IO) {
             val mmr = MediaMetadataRetriever()
             try {
-                mmr.setDataSource(item.path, HashMap<String, String>())
-                bitmap = mmr.getFrameAtTime(20000000, MediaMetadataRetriever.OPTION_CLOSEST) // frame at 20 seconds
+                mmr.setDataSource(element.path, HashMap<String, String>())
+                bitmap = mmr.getFrameAtTime(2000000, MediaMetadataRetriever.OPTION_CLOSEST) // frame at 20 seconds
             } catch (e: RuntimeException) {
                 e.printStackTrace()
             } finally {
                 mmr.release()
             }
             bitmap?.let {
-                cacheRepository.writeFile(it, fileName)
-                view.refreshItem(item)
+                thumbnailRepository.writeElementThumbnail(it, element)
+                view.refreshItem(element)
             }
         }
     }

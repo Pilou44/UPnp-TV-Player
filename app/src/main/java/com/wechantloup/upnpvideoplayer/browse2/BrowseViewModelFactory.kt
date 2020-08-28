@@ -3,19 +3,19 @@ package com.wechantloup.upnpvideoplayer.browse2
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.wechantloup.upnpvideoplayer.UPnPApplication
-import com.wechantloup.upnpvideoplayer.data.repository.CacheRepository
+import com.wechantloup.upnpvideoplayer.data.repository.ThumbnailRepository
 import com.wechantloup.upnpvideoplayer.data.repository.VideoRepository
 
 internal class BrowseViewModelFactory(
     private val videoRepository: VideoRepository,
-    private val cacheRepository: CacheRepository
+    private val thumbnailRepository: ThumbnailRepository
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel?> create(modelClass: Class<T>): T {
         return BrowseViewModel(
             videoRepository,
-            cacheRepository
+            thumbnailRepository
         ) as T
     }
 
@@ -26,7 +26,7 @@ internal class BrowseViewModelFactory(
 
             return BrowseViewModelFactory(
                 application.videoRepository,
-                CacheRepository(application)
+                ThumbnailRepository(application)
             )
         }
     }

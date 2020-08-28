@@ -14,7 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import com.wechantloup.upnpvideoplayer.R
 import com.wechantloup.upnpvideoplayer.UPnPApplication
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
-import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
+import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
 import com.wechantloup.upnpvideoplayer.videoPlayer.ControlsOverlay.ControlsOverlayListener
 import kotlinx.coroutines.launch
 import org.videolan.libvlc.LibVLC
@@ -90,7 +90,7 @@ class VideoPlayerActivity : AppCompatActivity(), ControlsOverlayListener {
         val current = list!![index]
         val currentPosition = mMediaPlayer!!.time
         val currentTime = System.currentTimeMillis()
-        val savableElement = VideoElement(current, currentPosition, currentTime)
+        val savableElement = StartedVideoElement(current, currentPosition, currentTime)
         lifecycleScope.launch {
             Log.i("TEST", "Save an element")
             (applicationContext as UPnPApplication).videoRepository.writeVideoElement(savableElement)

@@ -2,7 +2,6 @@ package com.wechantloup.upnpvideoplayer.browse2
 
 import android.graphics.Color
 import android.graphics.drawable.Drawable
-import android.net.Uri
 import android.util.Log
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
@@ -10,7 +9,7 @@ import androidx.leanback.widget.Presenter
 import com.bumptech.glide.Glide
 import com.wechantloup.upnpvideoplayer.R
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
-import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
+import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
 import com.wechantloup.upnpvideoplayer.widgets.BrowsingCardView
 import kotlin.properties.Delegates
 
@@ -71,20 +70,21 @@ internal class CardPresenter(private val viewModel: BrowseContract.ViewModel) : 
                         .into(cardView.getMainImageView())
                 }
             }
-        } else if (item is VideoElement) {
+        } else if (item is StartedVideoElement) {
             cardView.isFocusable = true
             cardView.isFocusableInTouchMode = true
             updateCardBackgroundColor(cardView, empty = false, selected = false)
 
-//        if (movie.cardImageUrl != null) {
             cardView.setTitleText(item.name)
-//            cardView.contentText = movie.studio
-//            Glide.with(viewHolder.view.context)
-//                .load(movie.cardImageUrl)
-//                .centerCrop()
-//                .error(mDefaultCardImage)
-//                .into(cardView.mainImageView)
-//        }
+
+            val uri = viewModel.getThumbnail(item)
+            uri?.let {
+                Glide.with(viewHolder.view.context)
+                    .load(uri)
+                    .centerCrop()
+                    .error(mDefaultCardImage)
+                    .into(cardView.getMainImageView())
+            }
         } else {
             cardView.setTitleText(null)
             cardView.isFocusable = false

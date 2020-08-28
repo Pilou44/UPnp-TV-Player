@@ -12,7 +12,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.wechantloup.upnpvideoplayer.R
 import com.wechantloup.upnpvideoplayer.UPnPApplication
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
-import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
+import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
 import com.wechantloup.upnpvideoplayer.dialog.DialogActivity
 import com.wechantloup.upnpvideoplayer.main.MainActivity
 import com.wechantloup.upnpvideoplayer.videoPlayer.VideoPlayerActivity
@@ -20,7 +20,7 @@ import com.wechantloup.upnpvideoplayer.videoPlayer.VideoPlayerActivity
 class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
 
     private var dialogDisplayed: Boolean = false
-    private var pendingElement: VideoElement? = null
+    private var pendingElement: StartedVideoElement? = null
     private lateinit var viewModel: BrowseContract.ViewModel
     private val videos = ArrayList<BrowsableVideoElement>()
     private var lastPlayedElement: BrowsableVideoElement? = null
@@ -124,16 +124,16 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
                 val index = videos.indexOf(item)
                 launch(videos, index, 0L)
             }
-        } else if (item is VideoElement) {
+        } else if (item is StartedVideoElement) {
             launchAndContinue(item)
         }
     }
 
-    private fun launchAndContinue(element: VideoElement) {
+    private fun launchAndContinue(element: StartedVideoElement) {
         viewModel.convertToBrowsableVideoElement(element)
     }
 
-    private fun launchFromStart(element: VideoElement) {
+    private fun launchFromStart(element: StartedVideoElement) {
         val copy = element.copy(position = 0L)
         viewModel.convertToBrowsableVideoElement(copy)
     }
@@ -146,7 +146,7 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
         startActivityForResult(intent, REQUEST_MEDIA_PLAYER)
     }
 
-    override fun updateStarted(startedMovies: List<VideoElement>) {
+    override fun updateStarted(startedMovies: List<StartedVideoElement>) {
         var count = 0
         while (count < browsingAdapter.size() && browsingAdapter[count] !is BrowsableVideoElement) {
             count++
@@ -164,7 +164,7 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
         lastPlayedElement?.let { element ->
             val pos = browsingAdapter.unmodifiableList<Any>().indexOfFirst {
                 when (it) {
-                    is VideoElement -> it.path == element.path
+                    is StartedVideoElement -> it.path == element.path
                     is BrowsableVideoElement -> it == element
                     else -> false
                 }
@@ -175,14 +175,16 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
         }
     }
 
-    override fun refreshItem(item: BrowsableVideoElement) {
+    override fun refreshItem(item: Any) {
         val index = browsingAdapter.indexOf(item)
-        browsingAdapter.notifyArrayItemRangeChanged(index, 1)
+        if (index >= 0) {
+            browsingAdapter.notifyArrayItemRangeChanged(index, 1)
+        }
     }
 
     override fun displayContent(
         title: String,
-        startedMovies: List<VideoElement>,
+        startedMovies: List<StartedVideoElement>,
         directories: List<BrowsableVideoElement>,
         movies: List<BrowsableVideoElement>,
         selectedElement: BrowsableVideoElement?
@@ -230,8 +232,8 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
         addAll(size(), items)
     }
 
-    private fun BrowsableVideoElement.hasBeenStarted(): VideoElement? {
-        val started = browsingAdapter.unmodifiableList<Any>().filterIsInstance<VideoElement>()
+    private fun BrowsableVideoElement.hasBeenStarted(): StartedVideoElement? {
+        val started = browsingAdapter.unmodifiableList<Any>().filterIsInstance<StartedVideoElement>()
         return started.firstOrNull { it.path == path }
     }
 

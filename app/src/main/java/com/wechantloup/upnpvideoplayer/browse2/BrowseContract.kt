@@ -3,13 +3,14 @@ package com.wechantloup.upnpvideoplayer.browse2
 import android.content.Context
 import android.net.Uri
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
+import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
 
 internal interface BrowseContract {
     interface View {
         fun displayContent(
             title: String,
-            startedMovies: List<VideoElement>,
+            startedMovies: List<StartedVideoElement>,
             directories: List<BrowsableVideoElement>,
             movies: List<BrowsableVideoElement>,
             selectedElement: BrowsableVideoElement?
@@ -20,8 +21,8 @@ internal interface BrowseContract {
             position: Long
         )
 
-        fun updateStarted(startedMovies: List<VideoElement>)
-        fun refreshItem(item: BrowsableVideoElement)
+        fun updateStarted(startedMovies: List<StartedVideoElement>)
+        fun refreshItem(item: Any)
     }
 
     interface ViewModel {
@@ -30,7 +31,7 @@ internal interface BrowseContract {
         fun onViewPaused(context: Context)
         fun parse(item: BrowsableVideoElement)
         fun goBack(): Boolean
-        fun convertToBrowsableVideoElement(item: VideoElement)
-        fun getThumbnail(item: BrowsableVideoElement): Uri?
+        fun convertToBrowsableVideoElement(item: StartedVideoElement)
+        fun getThumbnail(item: VideoElement): Uri?
     }
 }
