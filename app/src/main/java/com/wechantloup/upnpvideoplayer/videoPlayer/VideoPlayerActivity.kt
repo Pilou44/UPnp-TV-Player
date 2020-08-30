@@ -13,8 +13,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
 import com.wechantloup.upnpvideoplayer.R
 import com.wechantloup.upnpvideoplayer.UPnPApplication
-import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
+import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
 import com.wechantloup.upnpvideoplayer.videoPlayer.ControlsOverlay.ControlsOverlayListener
 import kotlinx.coroutines.launch
 import org.videolan.libvlc.LibVLC
@@ -28,8 +28,8 @@ class VideoPlayerActivity : AppCompatActivity(), ControlsOverlayListener {
     private var mLibVLC: LibVLC? = null
     private var mMediaPlayer: MediaPlayer? = null
     private var controls: ControlsOverlay? = null
-    private var list: ArrayList<BrowsableVideoElement>? = null
-    private var current: BrowsableVideoElement? = null
+    private var list: ArrayList<VideoElement.ParcelableElement>? = null
+    private var current: VideoElement.ParcelableElement? = null
     private var index = 0
     private var position = 0L
     override val duration = MutableLiveData<Long>()

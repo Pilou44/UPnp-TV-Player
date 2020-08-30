@@ -3,6 +3,7 @@ package com.wechantloup.upnpvideoplayer.browse2
 import android.app.Activity.RESULT_OK
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.KeyEvent
 import androidx.leanback.app.VerticalGridSupportFragment
 import androidx.leanback.widget.ArrayObjectAdapter
@@ -13,7 +14,9 @@ import androidx.lifecycle.ViewModelProvider
 import com.wechantloup.upnpvideoplayer.R
 import com.wechantloup.upnpvideoplayer.UPnPApplication
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
+import com.wechantloup.upnpvideoplayer.data.dataholder.ContainerElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
+import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
 import com.wechantloup.upnpvideoplayer.dialog.DialogFragment
 import com.wechantloup.upnpvideoplayer.main.MainActivity
 import com.wechantloup.upnpvideoplayer.videoPlayer.VideoPlayerActivity
@@ -21,8 +24,6 @@ import com.wechantloup.upnpvideoplayer.videoPlayer.VideoPlayerActivity
 class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
 
     private lateinit var viewModel: BrowseContract.ViewModel
-    private val videos = ArrayList<BrowsableVideoElement>()
-    private var lastPlayedElement: BrowsableVideoElement? = null
     private lateinit var browsingAdapter: ArrayObjectAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,8 +55,13 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == REQUEST_MEDIA_PLAYER) {
-            if (resultCode == RESULT_OK)
-                lastPlayedElement = data?.getParcelableExtra(VideoPlayerActivity.ELEMENT)
+            if (resultCode == RESULT_OK) {
+                val lastPlayedElement: VideoElement.ParcelableElement? =
+                    data?.getParcelableExtra(VideoPlayerActivity.ELEMENT)
+                lastPlayedElement?.let {
+                    viewModel.setLastPlayedElement(lastPlayedElement)
+                }
+            }
         } else {
             super.onActivityResult(requestCode, resultCode, data)
         }
@@ -89,75 +95,44 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
     }
 
     private fun onItemClicked(item: Any) {
-        if (item is BrowsableVideoElement) {
-            if (item.isDirectory) {
-                viewModel.parse(item)
-            } else {
-                val pendingElement = item.hasBeenStarted()
-                pendingElement?.let {
-                    val option1 = DialogFragment.Option(R.string.restart_dialog_button_positive) { launchAndContinue(it) }
-                    val option2 = DialogFragment.Option(R.string.restart_dialog_button_negative) { launchFromStart(it)}
-                    val optionList = listOf(option1, option2)
-                    val params = DialogFragment.Params(
-                        R.string.restart_dialog_title,
-                        R.string.restart_dialog_description,
-                        optionList
-                    )
-                    (activity as SuperBrowseActivity).showDialog(params)
-                    return
-                }
-                val index = videos.indexOf(item)
-                launch(videos, index, 0L)
-            }
-        } else if (item is StartedVideoElement) {
-            launchAndContinue(item)
+        when (item) {
+            is ContainerElement -> viewModel.parse(item)
+            is BrowsableVideoElement -> onBrowsableElementClicked(item)
+            is StartedVideoElement -> launchAndContinue(item)
         }
     }
 
+    private fun onBrowsableElementClicked(item: BrowsableVideoElement) {val pendingElement = item.hasBeenStarted()
+        pendingElement?.let {
+            val option1 = DialogFragment.Option(R.string.restart_dialog_button_positive) { launchAndContinue(it) }
+            val option2 = DialogFragment.Option(R.string.restart_dialog_button_negative) { launchFromStart(it)}
+            val optionList = listOf(option1, option2)
+            val params = DialogFragment.Params(
+                R.string.restart_dialog_title,
+                R.string.restart_dialog_description,
+                optionList
+            )
+            (activity as SuperBrowseActivity).showDialog(params)
+            return
+        }
+        viewModel.launch(item)
+    }
+
     private fun launchAndContinue(element: StartedVideoElement) {
-        viewModel.convertToBrowsableVideoElement(element)
+        viewModel.launch(element, element.position)
     }
 
     private fun launchFromStart(element: StartedVideoElement) {
-        val copy = element.copy(position = 0L)
-        viewModel.convertToBrowsableVideoElement(copy)
+        viewModel.launch(element)
     }
 
-    override fun launch(movies: ArrayList<BrowsableVideoElement>, index: Int, position: Long) {
+    override fun launch(movies: ArrayList<VideoElement.ParcelableElement>, index: Int, position: Long) {
+        Log.i(TAG, "Launch ${movies[index].name}")
         val intent = Intent(activity, VideoPlayerActivity::class.java)
         intent.putExtra(VideoPlayerActivity.EXTRA_URLS, movies)
         intent.putExtra(VideoPlayerActivity.EXTRA_INDEX, index)
         intent.putExtra(VideoPlayerActivity.EXTRA_POSITION, position)
         startActivityForResult(intent, REQUEST_MEDIA_PLAYER)
-    }
-
-    override fun updateStarted(startedMovies: List<StartedVideoElement>) {
-        var count = 0
-        while (count < browsingAdapter.size() && browsingAdapter[count] !is BrowsableVideoElement) {
-            count++
-        }
-        if (count == browsingAdapter.size()) return
-        browsingAdapter.removeItems(0, count)
-        browsingAdapter.addAll(0, startedMovies)
-
-        val lastLine = startedMovies.size % NUM_COLUMNS
-        if (lastLine > 0) {
-            val rest = NUM_COLUMNS - lastLine
-            repeat(rest) { browsingAdapter.add(startedMovies.size, Any()) }
-        }
-
-        lastPlayedElement?.let { element ->
-            val pos = browsingAdapter.unmodifiableList<Any>().indexOfFirst {
-                when (it) {
-                    is StartedVideoElement -> it.path == element.path
-                    is BrowsableVideoElement -> it == element
-                    else -> false
-                }
-            }
-            setSelectedPosition(pos)
-            showTitle(pos < NUM_COLUMNS)
-            lastPlayedElement = null
-        }
     }
 
     override fun refreshItem(item: Any) {
@@ -172,9 +147,9 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
     override fun displayContent(
         title: String,
         startedMovies: List<StartedVideoElement>,
-        directories: List<BrowsableVideoElement>,
+        directories: List<ContainerElement>,
         movies: List<BrowsableVideoElement>,
-        selectedElement: BrowsableVideoElement?
+        selectedElement: Any?
     ) {
         this.title = title
         val adapter = ArrayObjectAdapter(CardPresenter(viewModel))
@@ -195,10 +170,9 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
             repeat(rest) { adapter.add(Any()) }
         }
 
-        videos.clear()
-        videos.addAll(movies)
         adapter.addAll(movies)
 
+        Log.i(TAG, "Selected: $selectedElement")
         var pos = getInitialPosition(adapter)
         selectedElement?.let { pos = adapter.indexOf(it) }
         setSelectedPosition(pos)
@@ -211,7 +185,7 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
         return if (adapter.size() == 0) {
             0
         } else {
-            newAdapter.unmodifiableList<Any>().indexOfFirst { it is BrowsableVideoElement }
+            newAdapter.unmodifiableList<Any>().indexOfFirst { it is ContainerElement || it is BrowsableVideoElement }
         }
     }
 

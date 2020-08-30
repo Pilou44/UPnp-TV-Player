@@ -9,7 +9,9 @@ import androidx.leanback.widget.Presenter
 import com.bumptech.glide.Glide
 import com.wechantloup.upnpvideoplayer.R
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
+import com.wechantloup.upnpvideoplayer.data.dataholder.ContainerElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
+import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
 import com.wechantloup.upnpvideoplayer.widgets.BrowsingCardView
 import kotlin.properties.Delegates
 
@@ -44,22 +46,21 @@ internal class CardPresenter(private val viewModel: BrowseContract.ViewModel) : 
         Log.d(TAG, "onBindViewHolder")
         val cardView = viewHolder.view as BrowsingCardView
 
-        if (item is BrowsableVideoElement) {
-            cardView.isFocusable = true
-            cardView.isFocusableInTouchMode = true
-            updateCardBackgroundColor(cardView, empty = false, selected = false)
+        when (item) {
+            is ContainerElement -> {
+                cardView.isFocusable = true
+                cardView.isFocusableInTouchMode = true
+                updateCardBackgroundColor(cardView, empty = false, selected = false)
 
-//        if (movie.cardImageUrl != null) {
-            cardView.setTitleText(item.name)
-//            cardView.contentText = movie.studio
-            if (item.isDirectory) {
-                cardView.apply {
-//                    scaleType = ImageView.ScaleType.FIT_CENTER
-                    setMainImage(R.drawable.ic_folder)
-                }
-            } else {
-                val fileName = item.path.substring(item.path.lastIndexOf("/") + 1)
-                Log.d(TAG, "Find image for $fileName")
+                cardView.setTitleText(item.name)
+                cardView.setMainImage(R.drawable.ic_folder)
+            }
+            is VideoElement -> {
+                cardView.isFocusable = true
+                cardView.isFocusableInTouchMode = true
+                updateCardBackgroundColor(cardView, empty = false, selected = false)
+
+                cardView.setTitleText(item.name)
 
                 val uri = viewModel.getThumbnail(item)
                 uri?.let {
@@ -70,26 +71,28 @@ internal class CardPresenter(private val viewModel: BrowseContract.ViewModel) : 
                         .into(cardView.getMainImageView())
                 }
             }
-        } else if (item is StartedVideoElement) {
-            cardView.isFocusable = true
-            cardView.isFocusableInTouchMode = true
-            updateCardBackgroundColor(cardView, empty = false, selected = false)
-
-            cardView.setTitleText(item.name)
-
-            val uri = viewModel.getThumbnail(item)
-            uri?.let {
-                Glide.with(viewHolder.view.context)
-                    .load(uri)
-                    .centerCrop()
-                    .error(mDefaultCardImage)
-                    .into(cardView.getMainImageView())
+//            is StartedVideoElement -> {
+//                cardView.isFocusable = true
+//                cardView.isFocusableInTouchMode = true
+//                updateCardBackgroundColor(cardView, empty = false, selected = false)
+//
+//                cardView.setTitleText(item.name)
+//
+//                val uri = viewModel.getThumbnail(item)
+//                uri?.let {
+//                    Glide.with(viewHolder.view.context)
+//                        .load(uri)
+//                        .centerCrop()
+//                        .error(mDefaultCardImage)
+//                        .into(cardView.getMainImageView())
+//                }
+//            }
+            else -> {
+                cardView.setTitleText(null)
+                cardView.isFocusable = false
+                cardView.isFocusableInTouchMode = false
+                updateCardBackgroundColor(cardView, empty = true, selected = false)
             }
-        } else {
-            cardView.setTitleText(null)
-            cardView.isFocusable = false
-            cardView.isFocusableInTouchMode = false
-            updateCardBackgroundColor(cardView, empty = true, selected = false)
         }
     }
 

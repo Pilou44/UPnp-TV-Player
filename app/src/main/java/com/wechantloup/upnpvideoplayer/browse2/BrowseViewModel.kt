@@ -15,6 +15,7 @@ import androidx.lifecycle.viewModelScope
 import com.wechantloup.upnpvideoplayer.browse.RetrieveDeviceThread
 import com.wechantloup.upnpvideoplayer.browse.RetrieveDeviceThreadListener
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
+import com.wechantloup.upnpvideoplayer.data.dataholder.ContainerElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.DlnaRoot
 import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
@@ -39,14 +40,13 @@ import org.fourthline.cling.registry.Registry
 import org.fourthline.cling.support.contentdirectory.callback.Browse
 import org.fourthline.cling.support.model.BrowseFlag
 import org.fourthline.cling.support.model.DIDLContent
-import java.lang.NumberFormatException
-import java.lang.RuntimeException
 
 internal class BrowseViewModel(
     private val videoRepository: VideoRepository,
     private val thumbnailRepository: ThumbnailRepository
 ) : ViewModel(), BrowseContract.ViewModel, RetrieveDeviceThreadListener {
 
+    private var lastPlayedElement: VideoElement? = null
     private lateinit var view: BrowseContract.View
     private lateinit var context: Context // ToDo Must be removed once repositories have been created
 
@@ -54,7 +54,7 @@ internal class BrowseViewModel(
     private var rootName = ""
     private var bound = false
     private lateinit var remoteService: RemoteService
-    private var currentElement: BrowsableVideoElement? = null
+    private var currentElement: ContainerElement? = null
     private var upnpService: AndroidUpnpService? = null
     private val registryListener: BrowseRegistryListener =
         BrowseRegistryListener(::deviceAdded)
@@ -63,6 +63,7 @@ internal class BrowseViewModel(
 
     init {
         viewModelScope.launch {
+            @Suppress("EXPERIMENTAL_API_USAGE")
             requestChannel.consumeEach { retrieveThumbnail(it) }
         }
     }
@@ -108,7 +109,7 @@ internal class BrowseViewModel(
         }
     }
 
-    override fun parse(item: BrowsableVideoElement) {
+    override fun parse(item: ContainerElement) {
         viewModelScope.launch {
             parseAndUpdate(item)
         }
@@ -121,44 +122,43 @@ internal class BrowseViewModel(
         return true
     }
 
-    override fun convertToBrowsableVideoElement(item: StartedVideoElement) {
+    override fun launch(element: VideoElement, position: Long) {
         viewModelScope.launch {
-            videoRepository.removeVideo(item)
+            if (element is StartedVideoElement) {
+                videoRepository.removeVideo(element)
+            }
             upnpService?.controlPoint
-                ?.execute(object : Browse(remoteService, item.containerId, BrowseFlag.DIRECT_CHILDREN) {
+                ?.execute(object : Browse(remoteService, element.parentPath, BrowseFlag.DIRECT_CHILDREN) {
                     override fun received(
                         arg0: ActionInvocation<*>?,
                         didl: DIDLContent
                     ) {
                         Log.i(TAG, "found " + didl.items.size + " items.")
-                        val parent = BrowsableVideoElement(
-                            true,
-                            item.containerId,
-                            "parent",
-                            null
-                        )
-                        val movies = ArrayList<BrowsableVideoElement>()
+                        val movies = ArrayList<VideoElement.ParcelableElement>()
                         didl.items.forEach {
-                            BrowsableVideoElement(
-                                false,
+                            VideoElement.ParcelableElement(
                                 it.resources[0].value,
-                                it.title,
-                                parent
+                                element.parentPath,
+                                it.title
                             ).also { element ->
                                 movies.add(element)
                             }
                         }
-                        val index = movies.indexOfFirst { it.path == item.path }
+                        val index = movies.indexOfFirst { it.path == element.path }
 
                         if (index < 0) return
 
-                        view.launch(movies, index, item.position)
+                        view.launch(movies, index, position)
                     }
 
                     override fun updateStatus(status: Status) {}
                     override fun failure(arg0: ActionInvocation<*>?, arg1: UpnpResponse, arg2: String) {}
                 })
         }
+    }
+
+    override fun setLastPlayedElement(lastPlayedElement: VideoElement) {
+        this.lastPlayedElement = lastPlayedElement
     }
 
     override fun getThumbnail(item: VideoElement): Uri? {
@@ -217,23 +217,18 @@ internal class BrowseViewModel(
             if (device.isFullyHydrated) {
                 for (service in device.services as Array<RemoteService>) {
                     if (service.serviceType.type == "ContentDirectory") {
+                        val container: ContainerElement = currentElement ?: ContainerElement(rootPath, rootName, null)
                         Log.i(TAG, "ContentDirectory found")
                         remoteService = service
                         Log.i(TAG, "Browse root $rootPath")
                         upnpService?.controlPoint
-                            ?.execute(object : Browse(service, rootPath, BrowseFlag.DIRECT_CHILDREN) {
+                            ?.execute(object : Browse(service, container.path, BrowseFlag.DIRECT_CHILDREN) {
                                 override fun received(
                                     arg0: ActionInvocation<*>?,
                                     didl: DIDLContent
                                 ) {
                                     viewModelScope.launch {
-                                        if (currentElement == null) {
-                                            val current =
-                                                BrowsableVideoElement(  true, rootPath, rootName, null)
-                                            parseAndUpdate(didl, current)
-                                        } else {
-                                            refreshStarted()
-                                        }
+                                        parseAndUpdate(didl, container, lastPlayedElement)
                                     }
                                 }
 
@@ -254,7 +249,7 @@ internal class BrowseViewModel(
         }
     }
 
-    private fun parseAndUpdate(element: BrowsableVideoElement, caller: BrowsableVideoElement? = null) {
+    private fun parseAndUpdate(element: ContainerElement, caller: ContainerElement? = null) {
         upnpService?.controlPoint
             ?.execute(object : Browse(remoteService, element.path, BrowseFlag.DIRECT_CHILDREN) {
                 override fun received(
@@ -271,12 +266,7 @@ internal class BrowseViewModel(
             })
     }
 
-    private suspend fun refreshStarted() {
-        val startedMovies = videoRepository.getAllVideo()
-        view.updateStarted(startedMovies)
-    }
-
-    private suspend fun parseAndUpdate(didl: DIDLContent, clickedElement: BrowsableVideoElement, caller: BrowsableVideoElement? = null) {
+    private suspend fun parseAndUpdate(didl: DIDLContent, clickedElement: ContainerElement, caller: Any? = null) {
         val title = clickedElement.name
 
         val startedMovies = videoRepository.getAllVideo()
@@ -284,8 +274,7 @@ internal class BrowseViewModel(
 
         Log.i(TAG, "found " + didl.containers.size + " items.")
         val directories = didl.containers.map {
-            BrowsableVideoElement(
-                true,
+            ContainerElement(
                 it.id,
                 it.title,
                 clickedElement
@@ -295,7 +284,6 @@ internal class BrowseViewModel(
         Log.i(TAG, "found " + didl.items.size + " items.")
         val movies = didl.items.map {
             BrowsableVideoElement(
-                false,
                 it.resources[0].value,
                 it.title,
                 clickedElement

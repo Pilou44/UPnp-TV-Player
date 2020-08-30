@@ -7,18 +7,18 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "video")
 data class StartedVideoElement(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    @Ignore override val path: String,
+    override val path: String,
     val containerId: String,
-    @Ignore override val name: String,
+    override val name: String,
     val position: Long,
     val date: Long
-) : VideoElement(path, name) {
+) : VideoElement(path, containerId, name) {
 
-    constructor(browsableElement: BrowsableVideoElement, position: Long, time: Long) : this(
+    constructor(element: VideoElement, position: Long, time: Long) : this(
         0,
-        browsableElement.path,
-        browsableElement.parent!!.path,
-        browsableElement.name,
+        element.path,
+        element.parentPath,
+        element.name,
         position,
         time
     )
