@@ -11,6 +11,7 @@ import android.os.IBinder
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.bugsnag.android.Bugsnag
 import com.wechantloup.upnpvideoplayer.browse.RetrieveDeviceThread
 import com.wechantloup.upnpvideoplayer.browse.RetrieveDeviceThreadListener
 import com.wechantloup.upnpvideoplayer.data.GetRootUseCase
@@ -308,7 +309,7 @@ internal class BrowseViewModel(
     }
 
     override fun onDeviceNotFound() {
-        TODO("Not yet implemented")
+        Bugsnag.notify(Exception("Device not found"))
     }
 
     internal class BrowseRegistryListener(private val onDeviceAdded: (Device<*, *, *>) -> Unit) : DefaultRegistryListener() {

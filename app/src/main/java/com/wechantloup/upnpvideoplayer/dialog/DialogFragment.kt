@@ -36,7 +36,7 @@ class DialogFragment : GuidedStepSupportFragment() {
     }
 
     override fun onGuidedActionClicked(action: GuidedAction) {
-        (activity as? SuperBrowseActivity)?.let {
+        (activity as? DialogFragmentActivity)?.let {
             val option = params.options[action.id.toInt()]
             option.action()
             it.removeDialog()

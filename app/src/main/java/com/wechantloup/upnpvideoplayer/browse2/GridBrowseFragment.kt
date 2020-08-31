@@ -18,6 +18,7 @@ import com.wechantloup.upnpvideoplayer.data.dataholder.ContainerElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
 import com.wechantloup.upnpvideoplayer.dialog.DialogFragment
+import com.wechantloup.upnpvideoplayer.dialog.DialogFragmentActivity
 import com.wechantloup.upnpvideoplayer.main.MainActivity
 import com.wechantloup.upnpvideoplayer.videoPlayer.VideoPlayerActivity
 
@@ -112,7 +113,7 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
                 R.string.restart_dialog_description,
                 optionList
             )
-            (activity as SuperBrowseActivity).showDialog(params)
+            (activity as DialogFragmentActivity).showDialog(params)
             return
         }
         viewModel.launch(item)
