@@ -8,7 +8,6 @@ import com.wechantloup.upnpvideoplayer.dialog.DialogFragment
 
 class SuperBrowseActivity : FragmentActivity() {
 
-    private val DIALOG_FRAGMENT: String = "dialog_fragment"
     private lateinit var fragment: GridBrowseFragment
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,15 +26,19 @@ class SuperBrowseActivity : FragmentActivity() {
     }
 
     fun showDialog(params: DialogFragment.Params) {
-        val dialogFragment: DialogFragment = DialogFragment()
+        val dialogFragment = DialogFragment()
         dialogFragment.bind(params)
-        supportFragmentManager.beginTransaction().add(android.R.id.content, dialogFragment, DIALOG_FRAGMENT).commit()
+        supportFragmentManager.beginTransaction().add(android.R.id.content, dialogFragment, TAG_DIALOG_FRAGMENT).commit()
     }
 
     fun removeDialog() {
-        val dialogFragment = supportFragmentManager.findFragmentByTag(DIALOG_FRAGMENT)
+        val dialogFragment = supportFragmentManager.findFragmentByTag(TAG_DIALOG_FRAGMENT)
         dialogFragment?.let {
             supportFragmentManager.beginTransaction().remove(dialogFragment).commit()
         }
+    }
+
+    companion object {
+        private const val TAG_DIALOG_FRAGMENT: String = "dialog_fragment"
     }
 }
