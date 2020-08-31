@@ -20,6 +20,9 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
+        <meta-data android:name="com.bugsnag.android.API_KEY"
+            android:value="65fd84131ff3ce91795c105ce77d0533" />
         <activity
             android:name=".main.MainActivity"
             android:noHistory="true"/>
