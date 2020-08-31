@@ -8,12 +8,12 @@ import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.IBinder
-import android.preference.PreferenceManager
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wechantloup.upnpvideoplayer.browse.RetrieveDeviceThread
 import com.wechantloup.upnpvideoplayer.browse.RetrieveDeviceThreadListener
+import com.wechantloup.upnpvideoplayer.data.GetRootUseCase
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.ContainerElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.DlnaRoot
@@ -21,7 +21,6 @@ import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
 import com.wechantloup.upnpvideoplayer.data.repository.ThumbnailRepository
 import com.wechantloup.upnpvideoplayer.data.repository.VideoRepository
-import com.wechantloup.upnpvideoplayer.utils.Serializer.deserialize
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
@@ -43,12 +42,12 @@ import org.fourthline.cling.support.model.DIDLContent
 
 internal class BrowseViewModel(
     private val videoRepository: VideoRepository,
-    private val thumbnailRepository: ThumbnailRepository
+    private val thumbnailRepository: ThumbnailRepository,
+    private val getRootUseCase: GetRootUseCase
 ) : ViewModel(), BrowseContract.ViewModel, RetrieveDeviceThreadListener {
 
     private var lastPlayedElement: VideoElement? = null
     private lateinit var view: BrowseContract.View
-    private lateinit var context: Context // ToDo Must be removed once repositories have been created
 
     private var bound = false
     private lateinit var remoteService: RemoteService
@@ -87,8 +86,6 @@ internal class BrowseViewModel(
     }
 
     override fun onViewResumed(context: Context) {
-        this.context = context // ToDo Must be removed once repositories have been created
-
         // This will start the UPnP service if it wasn't already started
         Log.i(TAG, "Start UPnP Service")
         context.applicationContext?.bindService(
@@ -114,9 +111,10 @@ internal class BrowseViewModel(
     }
 
     override fun goBack(): Boolean {
-        val currentNow = currentElement ?: return false
-        if (currentNow.parent == null) return false
-        parseAndUpdate(currentNow.parent, currentNow)
+        currentElement.let {
+            if (it.parent == null) return false
+            parseAndUpdate(it.parent, it)
+        }
         return true
     }
 
@@ -198,7 +196,7 @@ internal class BrowseViewModel(
     private fun extractTimeToCapture(duration: String?): Long {
         if (duration == null) return DEFAULT_TIME_TO_CAPTURE
 
-        var longDuration = -1L
+        val longDuration: Long
         try {
             longDuration = duration.toLong()
         } catch (e: NumberFormatException) {
@@ -213,6 +211,7 @@ internal class BrowseViewModel(
         if (device.type.type == "MediaServer") {
             Log.i(TAG, "Found media server")
             if (device.isFullyHydrated) {
+                @Suppress("UNCHECKED_CAST")
                 for (service in device.services as Array<RemoteService>) {
                     if (service.serviceType.type == "ContentDirectory") {
                         Log.i(TAG, "ContentDirectory found")
@@ -294,11 +293,7 @@ internal class BrowseViewModel(
 
     private fun findDevice() {
         Log.i(TAG, "Trying to connect to DLNA server")
-
-        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
-
-        val rootJson = prefs.getString("ROOT", null)
-        val root: DlnaRoot? = rootJson?.deserialize()
+        val root: DlnaRoot? = getRootUseCase.execute()
         root?.let {
             Log.i(TAG, "Trying to connect")
             currentElement = ContainerElement(root.mPath, root.mName, null)
