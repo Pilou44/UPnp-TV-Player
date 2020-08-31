@@ -50,11 +50,9 @@ internal class BrowseViewModel(
     private lateinit var view: BrowseContract.View
     private lateinit var context: Context // ToDo Must be removed once repositories have been created
 
-    private var rootPath = "root"
-    private var rootName = ""
     private var bound = false
     private lateinit var remoteService: RemoteService
-    private var currentElement: ContainerElement? = null
+    private lateinit var currentElement: ContainerElement
     private var upnpService: AndroidUpnpService? = null
     private val registryListener: BrowseRegistryListener =
         BrowseRegistryListener(::deviceAdded)
@@ -217,18 +215,17 @@ internal class BrowseViewModel(
             if (device.isFullyHydrated) {
                 for (service in device.services as Array<RemoteService>) {
                     if (service.serviceType.type == "ContentDirectory") {
-                        val container: ContainerElement = currentElement ?: ContainerElement(rootPath, rootName, null)
                         Log.i(TAG, "ContentDirectory found")
                         remoteService = service
-                        Log.i(TAG, "Browse root $rootPath")
+                        Log.i(TAG, "Browse root")
                         upnpService?.controlPoint
-                            ?.execute(object : Browse(service, container.path, BrowseFlag.DIRECT_CHILDREN) {
+                            ?.execute(object : Browse(service, currentElement.path, BrowseFlag.DIRECT_CHILDREN) {
                                 override fun received(
                                     arg0: ActionInvocation<*>?,
                                     didl: DIDLContent
                                 ) {
                                     viewModelScope.launch {
-                                        parseAndUpdate(didl, container, lastPlayedElement)
+                                        parseAndUpdate(didl, currentElement, lastPlayedElement)
                                     }
                                 }
 
@@ -304,8 +301,7 @@ internal class BrowseViewModel(
         val root: DlnaRoot? = rootJson?.deserialize()
         root?.let {
             Log.i(TAG, "Trying to connect")
-            rootPath = root.mPath
-            rootName = root.mName
+            currentElement = ContainerElement(root.mPath, root.mName, null)
             val thread =
                 RetrieveDeviceThread(upnpService, root.mUdn, root.mUrl, root.mMaxAge, this)
             // ToDo to improve
