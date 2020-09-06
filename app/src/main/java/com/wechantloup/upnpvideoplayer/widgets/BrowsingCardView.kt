@@ -22,16 +22,6 @@ open class BrowsingCardView(context: Context) : ConstraintLayout(context) {
         titleView = findViewById(R.id.title)
     }
 
-    override fun setSelected(selected: Boolean) {
-        if (selected) {
-            titleView.ellipsize = TextUtils.TruncateAt.MARQUEE
-            titleView.marqueeRepeatLimit = -1
-            titleView.isSingleLine = true
-        } else {
-            titleView.ellipsize = TextUtils.TruncateAt.END
-        }
-    }
-
     fun setTitleText(text: String?) {
         val titleView = findViewById<TextView>(R.id.title)
         titleView.text = text
