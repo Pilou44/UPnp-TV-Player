@@ -2,6 +2,7 @@ package com.wechantloup.upnpvideoplayer.browse2
 
 import android.content.Context
 import android.net.Uri
+import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.ContainerElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
@@ -14,7 +15,7 @@ internal interface BrowseContract {
             startedMovies: List<StartedVideoElement>,
             directories: List<ContainerElement>,
             movies: List<BrowsableVideoElement>,
-            selectedElement: Any?
+            selectedElement: BrowsableElement?
         )
         fun launch(
             movies: ArrayList<VideoElement.ParcelableElement>,

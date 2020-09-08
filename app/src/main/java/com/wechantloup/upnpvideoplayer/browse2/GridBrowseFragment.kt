@@ -13,6 +13,7 @@ import androidx.leanback.widget.VerticalGridPresenter
 import androidx.lifecycle.ViewModelProvider
 import com.wechantloup.upnpvideoplayer.R
 import com.wechantloup.upnpvideoplayer.UPnPApplication
+import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.ContainerElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
@@ -150,7 +151,7 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
         startedMovies: List<StartedVideoElement>,
         directories: List<ContainerElement>,
         movies: List<BrowsableVideoElement>,
-        selectedElement: Any?
+        selectedElement: BrowsableElement?
     ) {
         this.title = title
         val adapter = ArrayObjectAdapter(CardPresenter(viewModel))

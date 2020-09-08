@@ -5,10 +5,10 @@ import androidx.room.Ignore
 import kotlinx.android.parcel.Parcelize
 
 open class VideoElement(
-    @Ignore open val path: String,
+    @Ignore override val path: String,
     @Ignore open val parentPath : String,
     @Ignore open val name: String
-){
+) : BrowsableElement(path) {
 
     @Parcelize
     class ParcelableElement(
