@@ -8,9 +8,8 @@ import androidx.core.content.ContextCompat
 import androidx.leanback.widget.Presenter
 import com.bumptech.glide.Glide
 import com.wechantloup.upnpvideoplayer.R
-import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.ContainerElement
-import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
+import com.wechantloup.upnpvideoplayer.data.dataholder.ParametersElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
 import com.wechantloup.upnpvideoplayer.widgets.BrowsingCardView
 import kotlin.properties.Delegates
@@ -52,7 +51,7 @@ internal class CardPresenter(private val viewModel: BrowseContract.ViewModel) : 
                 cardView.isFocusableInTouchMode = true
                 updateCardBackgroundColor(cardView, empty = false, selected = false)
 
-                cardView.setTitleText(item.name)
+                cardView.setTitle(item.name)
                 cardView.setMainImage(R.drawable.ic_folder)
             }
             is VideoElement -> {
@@ -60,7 +59,7 @@ internal class CardPresenter(private val viewModel: BrowseContract.ViewModel) : 
                 cardView.isFocusableInTouchMode = true
                 updateCardBackgroundColor(cardView, empty = false, selected = false)
 
-                cardView.setTitleText(item.name)
+                cardView.setTitle(item.name)
 
                 val uri = viewModel.getThumbnail(item)
                 uri?.let {
@@ -71,24 +70,16 @@ internal class CardPresenter(private val viewModel: BrowseContract.ViewModel) : 
                         .into(cardView.getMainImageView())
                 }
             }
-//            is StartedVideoElement -> {
-//                cardView.isFocusable = true
-//                cardView.isFocusableInTouchMode = true
-//                updateCardBackgroundColor(cardView, empty = false, selected = false)
-//
-//                cardView.setTitleText(item.name)
-//
-//                val uri = viewModel.getThumbnail(item)
-//                uri?.let {
-//                    Glide.with(viewHolder.view.context)
-//                        .load(uri)
-//                        .centerCrop()
-//                        .error(mDefaultCardImage)
-//                        .into(cardView.getMainImageView())
-//                }
-//            }
+            is ParametersElement -> {
+                cardView.isFocusable = true
+                cardView.isFocusableInTouchMode = true
+                updateCardBackgroundColor(cardView, empty = false, selected = false)
+
+                cardView.setTitle(item.titleId)
+                cardView.setMainImage(item.icon)
+            }
             else -> {
-                cardView.setTitleText(null)
+                cardView.setTitle(null)
                 cardView.isFocusable = false
                 cardView.isFocusableInTouchMode = false
                 updateCardBackgroundColor(cardView, empty = true, selected = false)

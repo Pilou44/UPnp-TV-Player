@@ -22,4 +22,6 @@
     <string name="restart_dialog_description">Vous pouvez choisir de continuer la lecture la ou vous vous etes arretes ou bien reprendre du debut</string>
     <string name="restart_dialog_button_positive">Continuer</string>
     <string name="restart_dialog_button_negative">Reprendre du debut</string>
+    <string name="setting_title_dlna_root">Root directory</string>
+    <string name="setting_title_play">Player options</string>
 </resources>

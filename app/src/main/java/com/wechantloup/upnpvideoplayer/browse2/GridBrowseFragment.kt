@@ -16,11 +16,16 @@ import com.wechantloup.upnpvideoplayer.UPnPApplication
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.ContainerElement
+import com.wechantloup.upnpvideoplayer.data.dataholder.DlnaRoot
+import com.wechantloup.upnpvideoplayer.data.dataholder.ParametersElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
 import com.wechantloup.upnpvideoplayer.dialog.DialogFragment
 import com.wechantloup.upnpvideoplayer.dialog.DialogFragmentActivity
 import com.wechantloup.upnpvideoplayer.main.MainActivity
+import com.wechantloup.upnpvideoplayer.rootSetter.RootSetterActivity
+import com.wechantloup.upnpvideoplayer.rootSetter.RootSetterActivity.Companion.ARG_ROOT
+import com.wechantloup.upnpvideoplayer.utils.Serializer.deserialize
 import com.wechantloup.upnpvideoplayer.videoPlayer.VideoPlayerActivity
 
 class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
@@ -64,6 +69,11 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
                     viewModel.setLastPlayedElement(lastPlayedElement)
                 }
             }
+        } else if (requestCode == REQUEST_SETTING_DLNA_ROOT) {
+            if (resultCode == RESULT_OK) {
+                val newRoot: DlnaRoot = requireNotNull(data?.getStringExtra(ARG_ROOT)?.deserialize())
+                viewModel.resetRoot(newRoot)
+            }
         } else {
             super.onActivityResult(requestCode, resultCode, data)
         }
@@ -86,11 +96,6 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
         setGridPresenter(gridPresenter)
         adapter = ArrayObjectAdapter(CardPresenter(viewModel))
 
-        setOnSearchClickedListener {
-            val intent = Intent(activity, MainActivity::class.java)
-            startActivity(intent)
-            activity?.finish()
-        }
         titleView = BrowseTitleView(requireContext())
 
         setOnItemViewClickedListener { _, item, _, _ -> onItemClicked(item) }
@@ -101,7 +106,12 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
             is ContainerElement -> viewModel.parse(item)
             is BrowsableVideoElement -> onBrowsableElementClicked(item)
             is StartedVideoElement -> launchAndContinue(item)
+            is ParametersElement -> launcParameter(item)
         }
+    }
+
+    private fun launcParameter(item: ParametersElement) {
+        startActivityForResult(item.intent, item.requestCode)
     }
 
     private fun onBrowsableElementClicked(item: BrowsableVideoElement) {val pendingElement = item.hasBeenStarted()
@@ -157,22 +167,15 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
         val adapter = ArrayObjectAdapter(CardPresenter(viewModel))
 
         adapter.addAll(startedMovies)
-
-        var lastLine = startedMovies.size % NUM_COLUMNS
-        if (lastLine > 0) {
-            val rest = NUM_COLUMNS - lastLine
-            repeat(rest) { adapter.add(Any()) }
-        }
+        adapter.completeLine()
 
         adapter.addAll(directories)
-
-        lastLine = directories.size % NUM_COLUMNS
-        if (lastLine > 0) {
-            val rest = NUM_COLUMNS - lastLine
-            repeat(rest) { adapter.add(Any()) }
-        }
+        adapter.completeLine()
 
         adapter.addAll(movies)
+        adapter.completeLine()
+        
+        adapter.addAll(getParameters())
 
         Log.i(TAG, "Selected: $selectedElement")
         var pos = getInitialPosition(adapter)
@@ -181,6 +184,24 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
         showTitle(pos < NUM_COLUMNS)
 
         this.adapter = adapter
+    }
+
+    private fun getParameters(): List<ParametersElement> {
+        val root = ParametersElement(
+            R.string.setting_title_dlna_root,
+            R.color.card_background_dlna_root,
+            R.drawable.ic_setting_dlna_root,
+            Intent(context, RootSetterActivity::class.java),
+            REQUEST_SETTING_DLNA_ROOT
+        )
+        val play = ParametersElement(
+            R.string.setting_title_play,
+            R.color.card_background_dlna_root,
+            R.drawable.ic_setting_player,
+            Intent(activity, MainActivity::class.java),
+            REQUEST_SETTING_PLAYER_OPTIONS
+        )
+        return listOf(root, play)
     }
 
     private fun getInitialPosition(newAdapter: ArrayObjectAdapter): Int {
@@ -206,9 +227,19 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
         return false
     }
 
+    private fun ArrayObjectAdapter.completeLine() {
+        val lastLine = size() % NUM_COLUMNS
+        if (lastLine > 0) {
+            val rest = NUM_COLUMNS - lastLine
+            repeat(rest) { add(Any()) }
+        }
+    }
+
     companion object {
         private val TAG = GridBrowseFragment::class.java.simpleName
         private const val NUM_COLUMNS = 5
         private const val REQUEST_MEDIA_PLAYER = 2911
+        private const val REQUEST_SETTING_DLNA_ROOT = 1507
+        private const val REQUEST_SETTING_PLAYER_OPTIONS = 410
     }
 }

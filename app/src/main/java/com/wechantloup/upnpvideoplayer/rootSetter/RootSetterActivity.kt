@@ -103,21 +103,27 @@ class RootSetterActivity : Activity() {
         }
     }
 
-    override fun onDestroy() {
-        exportRoot()
-        super.onDestroy()
+    override fun onBackPressed() {
+        val element = selectedElement
+        if (element == null) {
+            setResult(RESULT_CANCELED)
+        } else {
+            val root = DlnaRoot(
+                element.name,
+                element.udn,
+                element.url,
+                element.path,
+                element.maxAge
+            )
+            exportRoot(root)
+            val intent = Intent().apply { putExtra(ARG_ROOT, root.serialize()) }
+            setResult(RESULT_OK, intent)
+        }
+        finish()
     }
 
-    private fun exportRoot() {
-        val element = selectedElement ?: return
+    private fun exportRoot(root: DlnaRoot) {
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
-        val root = DlnaRoot(
-            element.name,
-            element.udn,
-            element.url,
-            element.path,
-            element.maxAge
-        )
         prefs.edit().putString("ROOT", root.serialize()).apply()
     }
 
@@ -187,6 +193,7 @@ class RootSetterActivity : Activity() {
 
     companion object {
         private val TAG = RootSetterActivity::class.java.simpleName
+        const val ARG_ROOT = "root"
     }
 
     internal class BrowseRegistryListener(private val handler: Handler, private var function: (Device<*, *, *>) -> Unit) : DefaultRegistryListener() {

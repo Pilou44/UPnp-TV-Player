@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.wechantloup.upnpvideoplayer.R
 
@@ -22,7 +23,12 @@ open class BrowsingCardView(context: Context) : ConstraintLayout(context) {
         titleView = findViewById(R.id.title)
     }
 
-    fun setTitleText(text: String?) {
+    fun setTitle(@StringRes textId: Int) {
+        val titleView = findViewById<TextView>(R.id.title)
+        titleView.setText(textId)
+    }
+
+    fun setTitle(text: String?) {
         val titleView = findViewById<TextView>(R.id.title)
         titleView.text = text
     }

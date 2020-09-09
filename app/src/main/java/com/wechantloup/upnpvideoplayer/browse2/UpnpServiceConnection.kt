@@ -33,7 +33,7 @@ import org.fourthline.cling.support.model.BrowseFlag
 import org.fourthline.cling.support.model.DIDLContent
 
 class UpnpServiceConnection(
-    private val root: DlnaRoot?,
+    private var root: DlnaRoot?,
     private val scope: CoroutineScope,
     private val callback: Callback
 ): ServiceConnection, RetrieveDeviceThreadListener {
@@ -66,7 +66,7 @@ class UpnpServiceConnection(
 
     fun bind(context: Context) {
         // This will start the UPnP service if it wasn't already started
-        Log.i(TAG, "Start UPnP Service")
+        Log.i(TAG, "bind")
         context.applicationContext?.bindService(
             Intent(context, AndroidUpnpServiceImpl::class.java),
             this,
@@ -84,15 +84,15 @@ class UpnpServiceConnection(
     }
 
     private fun findDevice() {
-        Log.i(TAG, "Trying to connect to DLNA server")
+        Log.i(TAG, "findDevice")
         root?.let {
-            Log.i(TAG, "Trying to connect")
+            Log.i(TAG, "Trying to connect root ${it.mName}")
             if (currentElement == null) {
-                currentElement = ContainerElement(root.mPath, root.mName, null)
+                currentElement = ContainerElement(it.mPath, it.mName, null)
             }
 
             val thread =
-                RetrieveDeviceThread(upnpService, root.mUdn, root.mUrl, root.mMaxAge, this)
+                RetrieveDeviceThread(upnpService, it.mUdn, it.mUrl, it.mMaxAge, this)
             // ToDo to improve
 //            thread.start()
             scope.launch {
@@ -225,6 +225,12 @@ class UpnpServiceConnection(
 
     fun setLastPlayedElement(lastPlayedElement: BrowsableElement) {
         this.lastPlayedElement = lastPlayedElement
+    }
+
+    fun resetRoot(newRoot: DlnaRoot?) {
+        Log.i(TAG, "resetRoot to ${newRoot?.mName}")
+        currentElement = null
+        root = newRoot
     }
 
     interface Callback {

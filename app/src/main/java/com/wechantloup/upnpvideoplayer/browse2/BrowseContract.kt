@@ -5,6 +5,7 @@ import android.net.Uri
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.ContainerElement
+import com.wechantloup.upnpvideoplayer.data.dataholder.DlnaRoot
 import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
 
@@ -34,5 +35,6 @@ internal interface BrowseContract {
         fun getThumbnail(item: VideoElement): Uri?
         fun launch(element: VideoElement, position: Long = 0)
         fun setLastPlayedElement(lastPlayedElement: VideoElement)
+        fun resetRoot(newRoot: DlnaRoot)
     }
 }

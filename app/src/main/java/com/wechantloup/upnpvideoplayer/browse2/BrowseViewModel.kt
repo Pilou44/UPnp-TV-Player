@@ -11,6 +11,7 @@ import com.wechantloup.upnpvideoplayer.data.GetRootUseCase
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.ContainerElement
+import com.wechantloup.upnpvideoplayer.data.dataholder.DlnaRoot
 import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
 import com.wechantloup.upnpvideoplayer.data.repository.ThumbnailRepository
@@ -24,7 +25,7 @@ import kotlinx.coroutines.withContext
 internal class BrowseViewModel(
     private val videoRepository: VideoRepository,
     private val thumbnailRepository: ThumbnailRepository,
-    getRootUseCase: GetRootUseCase
+    private val getRootUseCase: GetRootUseCase
 ) : ViewModel(), BrowseContract.ViewModel, UpnpServiceConnection.Callback {
 
     private lateinit var view: BrowseContract.View
@@ -77,6 +78,10 @@ internal class BrowseViewModel(
 
     override fun setLastPlayedElement(lastPlayedElement: VideoElement) {
         upnpServiceConnection.setLastPlayedElement(lastPlayedElement)
+    }
+
+    override fun resetRoot(newRoot: DlnaRoot) {
+        upnpServiceConnection.resetRoot(newRoot)
     }
 
     override fun getThumbnail(item: VideoElement): Uri? {
