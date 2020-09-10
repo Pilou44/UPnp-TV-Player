@@ -2,12 +2,12 @@ package com.wechantloup.upnpvideoplayer.browse2
 
 import android.content.Context
 import android.net.Uri
-import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableElement
-import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
-import com.wechantloup.upnpvideoplayer.data.dataholder.ContainerElement
-import com.wechantloup.upnpvideoplayer.data.dataholder.DlnaRoot
+import com.wechantloup.upnp.dataholder.UpnpElement
+import com.wechantloup.upnp.dataholder.VideoElement
+import com.wechantloup.upnp.dataholder.ContainerElement
+import com.wechantloup.upnp.dataholder.DlnaRoot
+import com.wechantloup.upnp.dataholder.PlayableItem
 import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
-import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
 
 internal interface BrowseContract {
     interface View {
@@ -15,12 +15,11 @@ internal interface BrowseContract {
             title: String,
             startedMovies: List<StartedVideoElement>,
             directories: List<ContainerElement>,
-            movies: List<BrowsableVideoElement>,
-            selectedElement: BrowsableElement?
+            movies: List<VideoElement>,
+            selectedElement: UpnpElement?
         )
         fun launch(
-            movies: ArrayList<VideoElement.ParcelableElement>,
-            index: Int,
+            playableItem: PlayableItem,
             position: Long
         )
         fun refreshItem(item: Any)
@@ -33,8 +32,8 @@ internal interface BrowseContract {
         fun parse(item: ContainerElement)
         fun goBack(): Boolean
         fun getThumbnail(item: VideoElement): Uri?
-        fun launch(element: VideoElement, position: Long = 0)
-        fun setLastPlayedElement(lastPlayedElement: VideoElement)
+        fun launch(element: UpnpElement, position: Long = 0)
+        fun setLastPlayedElementPath(lastPlayedElement: String)
         fun resetRoot(newRoot: DlnaRoot)
     }
 }

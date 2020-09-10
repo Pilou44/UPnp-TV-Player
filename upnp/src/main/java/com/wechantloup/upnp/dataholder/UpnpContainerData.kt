@@ -1,7 +1,7 @@
-package com.wechantloup.upnpvideoplayer.data.dataholder
+package com.wechantloup.upnp.dataholder
 
 class UpnpContainerData(
     val container: ContainerElement,
     val folders: List<ContainerElement>,
-    val movies: List<BrowsableVideoElement>
+    val movies: List<VideoElement>
 )

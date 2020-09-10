@@ -10,8 +10,7 @@
         android:id="@+id/icon"
         android:layout_width="20dp"
         android:layout_height="16dp"
-        android:src="@drawable/mini_dossier"
-        android:contentDescription="@string/directory_description" />
+        android:src="@drawable/mini_dossier" />
 
     <TextView
         android:id="@+id/name"

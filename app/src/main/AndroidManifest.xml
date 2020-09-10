@@ -43,10 +43,9 @@
         <activity android:name=".DetailsActivity" />
         <activity android:name=".PlaybackActivity" />
         <activity android:name=".BrowseErrorActivity" />
-        <activity android:name=".rootSetter.RootSetterActivity" />
+        <activity android:name="com.wechantloup.upnp.rootSetter.RootSetterActivity" />
         <activity android:name=".videoPlayer.VideoPlayerActivity"
             android:theme="@style/AppCompatTheme" />
-        <service android:name="org.fourthline.cling.android.AndroidUpnpServiceImpl" />
     </application>
 
 </manifest>

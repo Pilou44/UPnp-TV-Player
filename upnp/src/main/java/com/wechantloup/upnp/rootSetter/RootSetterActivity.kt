@@ -1,4 +1,4 @@
-package com.wechantloup.upnpvideoplayer.rootSetter
+package com.wechantloup.upnp.rootSetter
 
 import android.app.Activity
 import android.content.ComponentName
@@ -11,10 +11,9 @@ import android.os.IBinder
 import android.preference.PreferenceManager
 import android.util.Log
 import androidx.recyclerview.widget.RecyclerView
-import com.wechantloup.upnpvideoplayer.R
-import com.wechantloup.upnpvideoplayer.data.dataholder.DlnaElement
-import com.wechantloup.upnpvideoplayer.data.dataholder.DlnaRoot
-import com.wechantloup.upnpvideoplayer.utils.Serializer.serialize
+import com.wechantloup.core.utils.Serializer.serialize
+import com.wechantloup.upnp.R
+import com.wechantloup.upnp.dataholder.DlnaElement
 import org.fourthline.cling.android.AndroidUpnpService
 import org.fourthline.cling.android.AndroidUpnpServiceImpl
 import org.fourthline.cling.model.action.ActionInvocation
@@ -108,7 +107,7 @@ class RootSetterActivity : Activity() {
         if (element == null) {
             setResult(RESULT_CANCELED)
         } else {
-            val root = DlnaRoot(
+            val root = com.wechantloup.upnp.dataholder.DlnaRoot(
                 element.name,
                 element.udn,
                 element.url,
@@ -122,7 +121,7 @@ class RootSetterActivity : Activity() {
         finish()
     }
 
-    private fun exportRoot(root: DlnaRoot) {
+    private fun exportRoot(root: com.wechantloup.upnp.dataholder.DlnaRoot) {
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
         prefs.edit().putString("ROOT", root.serialize()).apply()
     }

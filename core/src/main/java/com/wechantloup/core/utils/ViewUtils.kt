@@ -1,4 +1,4 @@
-package com.wechantloup.upnpvideoplayer.utils
+package com.wechantloup.core.utils
 
 import android.app.Activity
 import android.transition.AutoTransition
@@ -9,7 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.LayoutRes
 
-internal object ViewUtils {
+object ViewUtils {
 
     fun ViewGroup.inflate(@LayoutRes layoutRes: Int, attachToRoot: Boolean = false): View =
         LayoutInflater

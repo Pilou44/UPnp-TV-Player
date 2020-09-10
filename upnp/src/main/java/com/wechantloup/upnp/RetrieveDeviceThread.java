@@ -1,4 +1,4 @@
-package com.wechantloup.upnpvideoplayer.upnp;
+package com.wechantloup.upnp;
 
 import android.util.Log;
 

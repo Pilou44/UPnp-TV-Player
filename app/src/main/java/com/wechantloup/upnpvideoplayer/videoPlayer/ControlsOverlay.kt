@@ -15,7 +15,7 @@ import com.google.android.material.button.MaterialButton
 import com.wechantloup.upnpvideoplayer.R
 import com.wechantloup.upnpvideoplayer.utils.ThreadsafeConstraintsApplier
 import com.wechantloup.upnpvideoplayer.utils.TimeUtils
-import com.wechantloup.upnpvideoplayer.utils.ViewUtils.startAnimatingConstraints
+import com.wechantloup.core.utils.ViewUtils.startAnimatingConstraints
 import java.util.Formatter
 import java.util.Locale
 import java.util.Timer

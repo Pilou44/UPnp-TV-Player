@@ -1,14 +1,13 @@
 package com.wechantloup.upnpvideoplayer.data
 
-import com.wechantloup.upnpvideoplayer.data.dataholder.DlnaRoot
 import com.wechantloup.upnpvideoplayer.data.repository.PreferencesRepository
-import com.wechantloup.upnpvideoplayer.utils.Serializer.deserialize
+import com.wechantloup.core.utils.Serializer.deserialize
 
 class GetRootUseCase(private val repository: PreferencesRepository) {
 
-    fun execute(): DlnaRoot? {
+    fun execute(): com.wechantloup.upnp.dataholder.DlnaRoot? {
         val serializedRoot = repository.getNullableString(KEY_ROOT)
-        return serializedRoot?.deserialize<DlnaRoot>()
+        return serializedRoot?.deserialize<com.wechantloup.upnp.dataholder.DlnaRoot>()
     }
 
     companion object {

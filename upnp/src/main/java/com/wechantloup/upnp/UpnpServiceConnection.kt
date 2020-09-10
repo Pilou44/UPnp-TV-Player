@@ -1,4 +1,4 @@
-package com.wechantloup.upnpvideoplayer.upnp
+package com.wechantloup.upnp
 
 import android.content.ComponentName
 import android.content.Context
@@ -7,15 +7,14 @@ import android.content.ServiceConnection
 import android.os.IBinder
 import android.util.Log
 import com.bugsnag.android.Bugsnag
-import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableElement
-import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
-import com.wechantloup.upnpvideoplayer.data.dataholder.ContainerElement
-import com.wechantloup.upnpvideoplayer.data.dataholder.DlnaRoot
-import com.wechantloup.upnpvideoplayer.data.dataholder.UpnpContainerData
-import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
+import com.wechantloup.upnp.dataholder.ContainerElement
+import com.wechantloup.upnp.dataholder.DlnaRoot
+import com.wechantloup.upnp.dataholder.PlayableItem
+import com.wechantloup.upnp.dataholder.UpnpContainerData
+import com.wechantloup.upnp.dataholder.UpnpElement
+import com.wechantloup.upnp.dataholder.VideoElement
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.fourthline.cling.android.AndroidUpnpService
@@ -31,6 +30,8 @@ import org.fourthline.cling.registry.Registry
 import org.fourthline.cling.support.contentdirectory.callback.Browse
 import org.fourthline.cling.support.model.BrowseFlag
 import org.fourthline.cling.support.model.DIDLContent
+import java.io.FileNotFoundException
+import java.lang.IllegalStateException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -41,7 +42,7 @@ class UpnpServiceConnection(
     private val callback: Callback
 ) : ServiceConnection, RetrieveDeviceThreadListener {
 
-    private var lastPlayedElement: BrowsableElement? = null
+//    private var lastPlayedElement: VideoElement? = null
     private lateinit var remoteService: RemoteService
     private var currentElement: ContainerElement? = null
     private var upnpService: AndroidUpnpService? = null
@@ -144,7 +145,7 @@ class UpnpServiceConnection(
         }
     }
 
-    suspend fun parseAndUpdate(element: ContainerElement, selectedElement: BrowsableElement?): UpnpContainerData =
+    suspend fun parseAndUpdate(element: ContainerElement): UpnpContainerData =
         suspendCoroutine { continuation ->
             upnpService?.controlPoint
                 ?.execute(object : Browse(remoteService, element.path, BrowseFlag.DIRECT_CHILDREN) {
@@ -152,7 +153,7 @@ class UpnpServiceConnection(
                         arg0: ActionInvocation<*>?,
                         didl: DIDLContent
                     ) {
-                        continuation.resume(parseAndUpdate(didl, element, selectedElement))
+                        continuation.resume(parseAndUpdate(didl, element))
                     }
 
                     override fun updateStatus(status: Status) {}
@@ -179,14 +180,8 @@ class UpnpServiceConnection(
 
     private fun parseAndUpdate(
         didl: DIDLContent,
-        openedElement: ContainerElement,
-        selectedElement: BrowsableElement?
+        openedElement: ContainerElement
     ): UpnpContainerData {
-        val title = openedElement.name
-
-//        val startedMovies = videoRepository.getAllVideo()
-//        Log.i("TAG", "${startedMovies.size} started elements found")
-
         Log.i(TAG, "found " + didl.containers.size + " items.")
         val directories = didl.containers.map {
             ContainerElement(
@@ -198,7 +193,7 @@ class UpnpServiceConnection(
 
         Log.i(TAG, "found " + didl.items.size + " items.")
         val movies = didl.items.map {
-            BrowsableVideoElement(
+            VideoElement(
                 it.resources[0].value,
                 it.title,
                 openedElement
@@ -207,54 +202,50 @@ class UpnpServiceConnection(
 
         currentElement = openedElement
 
-//        callback.setNewContent(title, directories, movies, selectedElement)
         return UpnpContainerData(openedElement, directories, movies)
     }
 
-//    fun browseParent(): Boolean {
-//        currentElement?.let {
-//            if (it.parent == null) return false
-//            parseAndUpdate(it.parent, it)
-//            return true
-//        }
-//        return false
-//    }
+    suspend fun launch(element: UpnpElement): PlayableItem =
+        suspendCoroutine { continuation ->
+            scope.launch {
+                if (element is ContainerElement) continuation.resumeWithException(IllegalStateException())
 
-    fun launch(element: VideoElement, position: Long) {
-        scope.launch {
-            upnpService?.controlPoint
-                ?.execute(object : Browse(remoteService, element.parentPath, BrowseFlag.DIRECT_CHILDREN) {
-                    override fun received(
-                        arg0: ActionInvocation<*>?,
-                        didl: DIDLContent
-                    ) {
-                        Log.i(TAG, "found " + didl.items.size + " items.")
-                        val movies = ArrayList<VideoElement.ParcelableElement>()
-                        didl.items.forEach {
-                            VideoElement.ParcelableElement(
-                                it.resources[0].value,
-                                element.parentPath,
-                                it.title
-                            ).also { element ->
-                                movies.add(element)
+                upnpService?.controlPoint
+                    ?.execute(object : Browse(remoteService, element.parentPath, BrowseFlag.DIRECT_CHILDREN) {
+                        override fun received(
+                            arg0: ActionInvocation<*>?,
+                            didl: DIDLContent
+                        ) {
+                            Log.i(TAG, "found " + didl.items.size + " items.")
+                            val movies = mutableListOf<UpnpElement>()
+                            didl.items.forEach {
+                                UpnpElement(
+                                    it.resources[0].value,
+                                    it.title,
+                                    ""
+                                ).also { element ->
+                                    movies.add(element)
+                                }
                             }
+                            val index = movies.indexOfFirst { it.path == element.path }
+
+                            if (index < 0) continuation.resumeWithException(FileNotFoundException())
+
+                            val item = PlayableItem(movies, index)
+                            continuation.resume(item)
                         }
-                        val index = movies.indexOfFirst { it.path == element.path }
 
-                        if (index < 0) return
-
-                        callback.launch(movies, index, position)
-                    }
-
-                    override fun updateStatus(status: Status) {}
-                    override fun failure(arg0: ActionInvocation<*>?, arg1: UpnpResponse, arg2: String) {}
-                })
+                        override fun updateStatus(status: Status) {}
+                        override fun failure(arg0: ActionInvocation<*>?, arg1: UpnpResponse, arg2: String) {
+                            continuation.resumeWithException(UpnpException(arg1))
+                        }
+                    })
+            }
         }
-    }
 
-    fun setLastPlayedElement(lastPlayedElement: BrowsableElement) {
-        this.lastPlayedElement = lastPlayedElement
-    }
+//    fun setLastPlayedElement(lastPlayedElement: VideoElement) {
+//        this.lastPlayedElement = lastPlayedElement
+//    }
 
     fun resetRoot(newRoot: DlnaRoot?) {
         Log.i(TAG, "resetRoot to ${newRoot?.mName}")
@@ -263,14 +254,6 @@ class UpnpServiceConnection(
     }
 
     interface Callback {
-        fun setNewContent(
-            title: String,
-            directories: List<ContainerElement>,
-            movies: List<BrowsableVideoElement>,
-            selectedElement: BrowsableElement?
-        )
-
-        fun launch(movies: ArrayList<VideoElement.ParcelableElement>, index: Int, position: Long)
         fun onReady()
         fun onErrorConnectingServer()
     }

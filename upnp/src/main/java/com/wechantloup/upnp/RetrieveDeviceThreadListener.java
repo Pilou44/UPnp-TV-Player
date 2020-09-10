@@ -1,4 +1,4 @@
-package com.wechantloup.upnpvideoplayer.upnp;
+package com.wechantloup.upnp;
 
 public interface RetrieveDeviceThreadListener {
 

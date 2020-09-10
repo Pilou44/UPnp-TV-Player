@@ -7,14 +7,13 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.wechantloup.upnpvideoplayer.upnp.UpnpServiceConnection
+import com.wechantloup.upnp.UpnpServiceConnection
 import com.wechantloup.upnpvideoplayer.data.GetRootUseCase
-import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableElement
-import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
-import com.wechantloup.upnpvideoplayer.data.dataholder.ContainerElement
-import com.wechantloup.upnpvideoplayer.data.dataholder.DlnaRoot
+import com.wechantloup.upnp.dataholder.VideoElement
+import com.wechantloup.upnp.dataholder.ContainerElement
+import com.wechantloup.upnp.dataholder.DlnaRoot
+import com.wechantloup.upnp.dataholder.UpnpElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
-import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
 import com.wechantloup.upnpvideoplayer.data.repository.ThumbnailRepository
 import com.wechantloup.upnpvideoplayer.data.repository.VideoRepository
 import kotlinx.coroutines.Dispatchers
@@ -64,7 +63,7 @@ internal class BrowseViewModel(
 
     override fun parse(item: ContainerElement) {
         viewModelScope.launch {
-            val data = upnpServiceConnection.parseAndUpdate(item, null)
+            val data = upnpServiceConnection.parseAndUpdate(item)
             view.displayContent(data.container.toString(), emptyList(), data.folders, data.movies, null)
             currentContainer = item
         }
@@ -75,27 +74,30 @@ internal class BrowseViewModel(
         val parent = currentContainer.parent ?: return false
 
         viewModelScope.launch {
-            val data = upnpServiceConnection.parseAndUpdate(parent, null)
+            val data = upnpServiceConnection.parseAndUpdate(parent)
             view.displayContent(data.container.toString(), emptyList(), data.folders, data.movies, currentContainer)
             currentContainer = parent
         }
         return true
     }
 
-    override fun launch(element: VideoElement, position: Long) {
+    override fun launch(element: UpnpElement, position: Long) {
+        if (element is ContainerElement) return
         viewModelScope.launch {
-            if (element is StartedVideoElement) {
-                videoRepository.removeVideo(element)
-            }
-            upnpServiceConnection.launch(element, position)
+//            if (element is StartedVideoElement) {
+//                videoRepository.removeVideo(element)
+//            }
+            val item = upnpServiceConnection.launch(element)
+            // ToDo
         }
     }
 
-    override fun setLastPlayedElement(lastPlayedElement: VideoElement) {
-        upnpServiceConnection.setLastPlayedElement(lastPlayedElement)
+    override fun setLastPlayedElementPath(lastPlayedElement: String) {
+        // ToDo
+//        upnpServiceConnection.setLastPlayedElement(lastPlayedElement)
     }
 
-    override fun resetRoot(newRoot: DlnaRoot) {
+    override fun resetRoot(newRoot: com.wechantloup.upnp.dataholder.DlnaRoot) {
         upnpServiceConnection.resetRoot(newRoot)
     }
 
@@ -109,26 +111,26 @@ internal class BrowseViewModel(
         return null
     }
 
-    override fun setNewContent(
-        title: String,
-        directories: List<ContainerElement>,
-        movies: List<BrowsableVideoElement>,
-        selectedElement: BrowsableElement?
-    ) {
-        viewModelScope.launch {
-            val startedMovies = videoRepository.getAllVideo()
-            view.displayContent(title, startedMovies, directories, movies, selectedElement)
-        }
-    }
+//    override fun setNewContent(
+//        title: String,
+//        directories: List<com.wechantloup.upnp.dataholder.ContainerElement>,
+//        movies: List<com.wechantloup.upnp.dataholder.BrowsableVideoElement>,
+//        selectedElement: com.wechantloup.upnp.dataholder.BrowsableElement?
+//    ) {
+//        viewModelScope.launch {
+//            val startedMovies = videoRepository.getAllVideo()
+//            view.displayContent(title, startedMovies, directories, movies, selectedElement)
+//        }
+//    }
 
-    override fun launch(movies: ArrayList<VideoElement.ParcelableElement>, index: Int, position: Long) {
-        view.launch(movies, index, position)
-    }
+//    override fun launch(movies: ArrayList<VideoElement.ParcelableElement>, index: Int, position: Long) {
+//        view.launch(movies, index, position)
+//    }
 
     override fun onReady() {
         root?.let {
             viewModelScope.launch {
-                val data = upnpServiceConnection.parseAndUpdate(it, null)
+                val data = upnpServiceConnection.parseAndUpdate(it)
                 view.displayContent(data.container.toString(), emptyList(), data.folders, data.movies, null)
                 currentContainer = it
             }

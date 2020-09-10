@@ -34,7 +34,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.drawable.GlideDrawable
 import com.bumptech.glide.request.animation.GlideAnimation
 import com.bumptech.glide.request.target.SimpleTarget
-import com.wechantloup.upnpvideoplayer.rootSetter.RootSetterActivity
+import com.wechantloup.upnp.rootSetter.RootSetterActivity
 
 /**
  * Loads a grid of cards with movies to browse.

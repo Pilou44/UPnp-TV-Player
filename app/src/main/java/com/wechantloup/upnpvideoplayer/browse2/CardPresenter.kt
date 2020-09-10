@@ -7,10 +7,10 @@ import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.Presenter
 import com.bumptech.glide.Glide
+import com.wechantloup.upnp.dataholder.ContainerElement
+import com.wechantloup.upnp.dataholder.VideoElement
 import com.wechantloup.upnpvideoplayer.R
-import com.wechantloup.upnpvideoplayer.data.dataholder.ContainerElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.ParametersElement
-import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
 import com.wechantloup.upnpvideoplayer.widgets.BrowsingCardView
 import kotlin.properties.Delegates
 

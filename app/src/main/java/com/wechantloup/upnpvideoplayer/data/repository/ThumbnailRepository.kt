@@ -4,7 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.media.ThumbnailUtils
 import android.net.Uri
-import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
+import com.wechantloup.upnp.dataholder.VideoElement
 import java.io.File
 import java.io.FileOutputStream
 
