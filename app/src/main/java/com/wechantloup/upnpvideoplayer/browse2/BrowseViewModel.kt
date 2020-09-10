@@ -7,6 +7,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.wechantloup.upnpvideoplayer.upnp.UpnpServiceConnection
 import com.wechantloup.upnpvideoplayer.data.GetRootUseCase
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement

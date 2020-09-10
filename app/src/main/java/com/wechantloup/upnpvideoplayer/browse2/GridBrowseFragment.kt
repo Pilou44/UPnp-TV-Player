@@ -27,6 +27,7 @@ import com.wechantloup.upnpvideoplayer.rootSetter.RootSetterActivity
 import com.wechantloup.upnpvideoplayer.rootSetter.RootSetterActivity.Companion.ARG_ROOT
 import com.wechantloup.upnpvideoplayer.utils.Serializer.deserialize
 import com.wechantloup.upnpvideoplayer.videoPlayer.VideoPlayerActivity
+import com.wechantloup.upnpvideoplayer.widgets.BrowseTitleView
 
 class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
 

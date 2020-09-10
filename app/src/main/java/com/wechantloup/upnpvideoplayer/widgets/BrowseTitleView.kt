@@ -1,4 +1,4 @@
-package com.wechantloup.upnpvideoplayer.browse2
+package com.wechantloup.upnpvideoplayer.widgets
 
 import android.content.Context
 import android.graphics.drawable.Drawable

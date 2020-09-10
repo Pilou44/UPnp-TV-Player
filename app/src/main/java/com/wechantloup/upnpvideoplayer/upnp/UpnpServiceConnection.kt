@@ -1,4 +1,4 @@
-package com.wechantloup.upnpvideoplayer.browse2
+package com.wechantloup.upnpvideoplayer.upnp
 
 import android.content.ComponentName
 import android.content.Context
@@ -7,8 +7,6 @@ import android.content.ServiceConnection
 import android.os.IBinder
 import android.util.Log
 import com.bugsnag.android.Bugsnag
-import com.wechantloup.upnpvideoplayer.browse.RetrieveDeviceThread
-import com.wechantloup.upnpvideoplayer.browse.RetrieveDeviceThreadListener
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.ContainerElement
