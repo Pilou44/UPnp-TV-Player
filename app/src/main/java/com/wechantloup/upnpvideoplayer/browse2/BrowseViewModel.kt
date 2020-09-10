@@ -26,9 +26,13 @@ import kotlinx.coroutines.withContext
 internal class BrowseViewModel(
     private val videoRepository: VideoRepository,
     private val thumbnailRepository: ThumbnailRepository,
-    private val getRootUseCase: GetRootUseCase
+    getRootUseCase: GetRootUseCase
 ) : ViewModel(), BrowseContract.ViewModel, UpnpServiceConnection.Callback {
 
+    private lateinit var currentContainer: ContainerElement
+    private var root: ContainerElement? = getRootUseCase.execute()?.let {
+        ContainerElement(it.mPath, it.mName, null)
+    }
     private lateinit var view: BrowseContract.View
 
     private val upnpServiceConnection = UpnpServiceConnection(
@@ -60,12 +64,22 @@ internal class BrowseViewModel(
 
     override fun parse(item: ContainerElement) {
         viewModelScope.launch {
-            upnpServiceConnection.parseAndUpdate(item, null)
+            val data = upnpServiceConnection.parseAndUpdate(item, null)
+            view.displayContent(data.container.toString(), emptyList(), data.folders, data.movies, null)
+            currentContainer = item
         }
     }
 
     override fun goBack(): Boolean {
-        return upnpServiceConnection.browseParent()
+        if (root == null) return false
+        val parent = currentContainer.parent ?: return false
+
+        viewModelScope.launch {
+            val data = upnpServiceConnection.parseAndUpdate(parent, null)
+            view.displayContent(data.container.toString(), emptyList(), data.folders, data.movies, currentContainer)
+            currentContainer = parent
+        }
+        return true
     }
 
     override fun launch(element: VideoElement, position: Long) {
@@ -109,6 +123,20 @@ internal class BrowseViewModel(
 
     override fun launch(movies: ArrayList<VideoElement.ParcelableElement>, index: Int, position: Long) {
         view.launch(movies, index, position)
+    }
+
+    override fun onReady() {
+        root?.let {
+            viewModelScope.launch {
+                val data = upnpServiceConnection.parseAndUpdate(it, null)
+                view.displayContent(data.container.toString(), emptyList(), data.folders, data.movies, null)
+                currentContainer = it
+            }
+        }
+    }
+
+    override fun onErrorConnectingServer() {
+        TODO("Not yet implemented")
     }
 
     private suspend fun retrieveThumbnail(element: VideoElement) {

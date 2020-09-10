@@ -11,9 +11,11 @@ import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.BrowsableVideoElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.ContainerElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.DlnaRoot
+import com.wechantloup.upnpvideoplayer.data.dataholder.UpnpContainerData
 import com.wechantloup.upnpvideoplayer.data.dataholder.VideoElement
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.fourthline.cling.android.AndroidUpnpService
@@ -29,12 +31,15 @@ import org.fourthline.cling.registry.Registry
 import org.fourthline.cling.support.contentdirectory.callback.Browse
 import org.fourthline.cling.support.model.BrowseFlag
 import org.fourthline.cling.support.model.DIDLContent
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
 class UpnpServiceConnection(
     private var root: DlnaRoot?,
     private val scope: CoroutineScope,
     private val callback: Callback
-): ServiceConnection, RetrieveDeviceThreadListener {
+) : ServiceConnection, RetrieveDeviceThreadListener {
 
     private var lastPlayedElement: BrowsableElement? = null
     private lateinit var remoteService: RemoteService
@@ -116,18 +121,21 @@ class UpnpServiceConnection(
                                     arg0: ActionInvocation<*>?,
                                     didl: DIDLContent
                                 ) {
-                                    parseAndUpdate(didl, element, lastPlayedElement)
+                                    callback.onReady()
+//                                    parseAndUpdate(didl, element, lastPlayedElement)
                                 }
 
                                 override fun updateStatus(status: Status) {
                                     Log.i(TAG, "updateStatus")
                                 }
+
                                 override fun failure(
                                     arg0: ActionInvocation<*>?,
                                     arg1: UpnpResponse,
                                     arg2: String
                                 ) {
                                     Log.i(TAG, "failure")
+                                    callback.onErrorConnectingServer()
                                 }
                             })
                     }
@@ -136,22 +144,44 @@ class UpnpServiceConnection(
         }
     }
 
-    fun parseAndUpdate(element: ContainerElement, selectedElement: BrowsableElement?) {
-        upnpService?.controlPoint
-            ?.execute(object : Browse(remoteService, element.path, BrowseFlag.DIRECT_CHILDREN) {
-                override fun received(
-                    arg0: ActionInvocation<*>?,
-                    didl: DIDLContent
-                ) {
-                    parseAndUpdate(didl, element, selectedElement)
-                }
+    suspend fun parseAndUpdate(element: ContainerElement, selectedElement: BrowsableElement?): UpnpContainerData =
+        suspendCoroutine { continuation ->
+            upnpService?.controlPoint
+                ?.execute(object : Browse(remoteService, element.path, BrowseFlag.DIRECT_CHILDREN) {
+                    override fun received(
+                        arg0: ActionInvocation<*>?,
+                        didl: DIDLContent
+                    ) {
+                        continuation.resume(parseAndUpdate(didl, element, selectedElement))
+                    }
 
-                override fun updateStatus(status: Status) {}
-                override fun failure(arg0: ActionInvocation<*>?, arg1: UpnpResponse, arg2: String) {}
-            })
-    }
+                    override fun updateStatus(status: Status) {}
+                    override fun failure(arg0: ActionInvocation<*>?, arg1: UpnpResponse, arg2: String) {
+                        continuation.resumeWithException(UpnpException(arg1))
+                    }
+                })
+        }
 
-    private fun parseAndUpdate(didl: DIDLContent, openedElement: ContainerElement, selectedElement: BrowsableElement?) {
+//    fun parseAndUpdate(element: ContainerElement, selectedElement: BrowsableElement?) {
+//        upnpService?.controlPoint
+//            ?.execute(object : Browse(remoteService, element.path, BrowseFlag.DIRECT_CHILDREN) {
+//                override fun received(
+//                    arg0: ActionInvocation<*>?,
+//                    didl: DIDLContent
+//                ) {
+//                    parseAndUpdate(didl, element, selectedElement)
+//                }
+//
+//                override fun updateStatus(status: Status) {}
+//                override fun failure(arg0: ActionInvocation<*>?, arg1: UpnpResponse, arg2: String) {}
+//            })
+//    }
+
+    private fun parseAndUpdate(
+        didl: DIDLContent,
+        openedElement: ContainerElement,
+        selectedElement: BrowsableElement?
+    ): UpnpContainerData {
         val title = openedElement.name
 
 //        val startedMovies = videoRepository.getAllVideo()
@@ -177,17 +207,18 @@ class UpnpServiceConnection(
 
         currentElement = openedElement
 
-        callback.setNewContent(title, directories, movies, selectedElement)
+//        callback.setNewContent(title, directories, movies, selectedElement)
+        return UpnpContainerData(openedElement, directories, movies)
     }
 
-    fun browseParent(): Boolean {
-        currentElement?.let {
-            if (it.parent == null) return false
-            parseAndUpdate(it.parent, it)
-            return true
-        }
-        return false
-    }
+//    fun browseParent(): Boolean {
+//        currentElement?.let {
+//            if (it.parent == null) return false
+//            parseAndUpdate(it.parent, it)
+//            return true
+//        }
+//        return false
+//    }
 
     fun launch(element: VideoElement, position: Long) {
         scope.launch {
@@ -240,9 +271,13 @@ class UpnpServiceConnection(
         )
 
         fun launch(movies: ArrayList<VideoElement.ParcelableElement>, index: Int, position: Long)
+        fun onReady()
+        fun onErrorConnectingServer()
     }
 
-    internal class BrowseRegistryListener(private val onDeviceAdded: (Device<*, *, *>) -> Unit) : DefaultRegistryListener() {
+    internal class BrowseRegistryListener(private val onDeviceAdded: (Device<*, *, *>) -> Unit) :
+        DefaultRegistryListener() {
+
         override fun remoteDeviceDiscoveryStarted(registry: Registry, device: RemoteDevice) {
             // Nothing to do
         }
@@ -272,3 +307,5 @@ class UpnpServiceConnection(
         private val TAG = UpnpServiceConnection::class.java.simpleName
     }
 }
+
+class UpnpException(upnpResponse: UpnpResponse) : Throwable(upnpResponse.statusMessage)
