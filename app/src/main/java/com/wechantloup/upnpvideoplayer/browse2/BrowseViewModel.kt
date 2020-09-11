@@ -88,7 +88,7 @@ internal class BrowseViewModel(
 //                videoRepository.removeVideo(element)
 //            }
             val item = upnpServiceConnection.launch(element)
-            // ToDo
+            view.launch(item, position)
         }
     }
 
