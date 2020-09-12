@@ -11,10 +11,8 @@ import androidx.leanback.widget.FocusHighlight
 import androidx.leanback.widget.ObjectAdapter
 import androidx.leanback.widget.VerticalGridPresenter
 import androidx.lifecycle.ViewModelProvider
-import com.wechantloup.upnp.dataholder.ContainerElement
 import com.wechantloup.upnp.dataholder.PlayableItem
 import com.wechantloup.upnp.dataholder.UpnpElement
-import com.wechantloup.upnp.dataholder.VideoElement
 import com.wechantloup.upnpvideoplayer.R
 import com.wechantloup.upnpvideoplayer.UPnPApplication
 import com.wechantloup.upnpvideoplayer.data.dataholder.ParametersElement
@@ -105,8 +103,13 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
 
     private fun onItemClicked(item: Any) {
         when (item) {
-            is ContainerElement -> viewModel.parse(item)
-            is VideoElement -> onBrowsableElementClicked(item)
+            is UpnpElement -> {
+                if (item.type == UpnpElement.Type.CONTAINER) {
+                    viewModel.parse(item)
+                } else {
+                    onBrowsableElementClicked(item)
+                }
+            }
             is StartedVideoElement -> launchAndContinue(item)
             is ParametersElement -> launcParameter(item)
         }
@@ -116,7 +119,7 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
         startActivityForResult(item.intent, item.requestCode)
     }
 
-    private fun onBrowsableElementClicked(item: VideoElement) {
+    private fun onBrowsableElementClicked(item: UpnpElement) {
         val pendingElement = item.hasBeenStarted()
         pendingElement?.let {
             val option1 = DialogFragment.Option(R.string.restart_dialog_button_positive) { launchAndContinue(it) }
@@ -134,11 +137,11 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
     }
 
     private fun launchAndContinue(element: StartedVideoElement) {
-        viewModel.launch(element, element.position)
+//        viewModel.launch(element, element.position)
     }
 
     private fun launchFromStart(element: StartedVideoElement) {
-        viewModel.launch(element)
+//        viewModel.launch(element)
     }
 
     override fun launch(playableItem: PlayableItem, position: Long) {
@@ -166,8 +169,8 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
     override fun displayContent(
         title: String,
         startedMovies: List<StartedVideoElement>,
-        directories: List<ContainerElement>,
-        movies: List<VideoElement>,
+        directories: List<UpnpElement>,
+        movies: List<UpnpElement>,
         selectedElement: UpnpElement?
     ) {
         this.title = title
@@ -215,7 +218,7 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
         return if (adapter.size() == 0) {
             0
         } else {
-            newAdapter.unmodifiableList<Any>().indexOfFirst { it is ContainerElement || it is VideoElement }
+            newAdapter.unmodifiableList<Any>().indexOfFirst { it is UpnpElement }
         }
     }
 
@@ -223,7 +226,7 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
         addAll(size(), items)
     }
 
-    private fun VideoElement.hasBeenStarted(): StartedVideoElement? {
+    private fun UpnpElement.hasBeenStarted(): StartedVideoElement? {
         val started = browsingAdapter.unmodifiableList<Any>().filterIsInstance<StartedVideoElement>()
         return started.firstOrNull { it.path == path }
     }

@@ -8,12 +8,8 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wechantloup.upnp.UpnpServiceConnection
-import com.wechantloup.upnpvideoplayer.data.GetRootUseCase
-import com.wechantloup.upnp.dataholder.VideoElement
-import com.wechantloup.upnp.dataholder.ContainerElement
-import com.wechantloup.upnp.dataholder.DlnaRoot
 import com.wechantloup.upnp.dataholder.UpnpElement
-import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
+import com.wechantloup.upnpvideoplayer.data.useCase.GetRootUseCase
 import com.wechantloup.upnpvideoplayer.data.repository.ThumbnailRepository
 import com.wechantloup.upnpvideoplayer.data.repository.VideoRepository
 import kotlinx.coroutines.Dispatchers
@@ -28,9 +24,9 @@ internal class BrowseViewModel(
     getRootUseCase: GetRootUseCase
 ) : ViewModel(), BrowseContract.ViewModel, UpnpServiceConnection.Callback {
 
-    private lateinit var currentContainer: ContainerElement
-    private var root: ContainerElement? = getRootUseCase.execute()?.let {
-        ContainerElement(it.mPath, it.mName, null)
+    private lateinit var currentContainer: UpnpElement
+    private var root: UpnpElement? = getRootUseCase.execute()?.let {
+        UpnpElement(UpnpElement.Type.CONTAINER, it.mPath, it.mName, null)
     }
     private lateinit var view: BrowseContract.View
 
@@ -40,7 +36,7 @@ internal class BrowseViewModel(
         this
     )
 
-    private val requestChannel: Channel<VideoElement> = Channel()
+    private val requestChannel: Channel<UpnpElement> = Channel()
 
     init {
         viewModelScope.launch {
@@ -61,10 +57,10 @@ internal class BrowseViewModel(
         upnpServiceConnection.unbind(context)
     }
 
-    override fun parse(item: ContainerElement) {
+    override fun parse(item: UpnpElement) {
         viewModelScope.launch {
             val data = upnpServiceConnection.parseAndUpdate(item)
-            view.displayContent(data.container.toString(), emptyList(), data.folders, data.movies, null)
+            view.displayContent(data.container.name, emptyList(), data.folders, data.movies, null)
             currentContainer = item
         }
     }
@@ -75,14 +71,14 @@ internal class BrowseViewModel(
 
         viewModelScope.launch {
             val data = upnpServiceConnection.parseAndUpdate(parent)
-            view.displayContent(data.container.toString(), emptyList(), data.folders, data.movies, currentContainer)
+            view.displayContent(data.container.name, emptyList(), data.folders, data.movies, currentContainer)
             currentContainer = parent
         }
         return true
     }
 
     override fun launch(element: UpnpElement, position: Long) {
-        if (element is ContainerElement) return
+        if (element.type == UpnpElement.Type.CONTAINER) return
         viewModelScope.launch {
 //            if (element is StartedVideoElement) {
 //                videoRepository.removeVideo(element)
@@ -101,7 +97,7 @@ internal class BrowseViewModel(
         upnpServiceConnection.resetRoot(newRoot)
     }
 
-    override fun getThumbnail(item: VideoElement): Uri? {
+    override fun getThumbnail(item: UpnpElement): Uri? {
         val uri: Uri? = thumbnailRepository.getElementThumbnail(item)
         uri?.let { return it }
         viewModelScope.launch {
@@ -131,7 +127,7 @@ internal class BrowseViewModel(
         root?.let {
             viewModelScope.launch {
                 val data = upnpServiceConnection.parseAndUpdate(it)
-                view.displayContent(data.container.toString(), emptyList(), data.folders, data.movies, null)
+                view.displayContent(data.container.name, emptyList(), data.folders, data.movies, null)
                 currentContainer = it
             }
         }
@@ -141,7 +137,7 @@ internal class BrowseViewModel(
         TODO("Not yet implemented")
     }
 
-    private suspend fun retrieveThumbnail(element: VideoElement) {
+    private suspend fun retrieveThumbnail(element: UpnpElement) {
         val uri: Uri? = thumbnailRepository.getElementThumbnail(element)
         uri?.let { return }
 

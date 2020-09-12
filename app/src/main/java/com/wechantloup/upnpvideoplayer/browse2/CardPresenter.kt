@@ -7,8 +7,7 @@ import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.Presenter
 import com.bumptech.glide.Glide
-import com.wechantloup.upnp.dataholder.ContainerElement
-import com.wechantloup.upnp.dataholder.VideoElement
+import com.wechantloup.upnp.dataholder.UpnpElement
 import com.wechantloup.upnpvideoplayer.R
 import com.wechantloup.upnpvideoplayer.data.dataholder.ParametersElement
 import com.wechantloup.upnpvideoplayer.widgets.BrowsingCardView
@@ -46,28 +45,32 @@ internal class CardPresenter(private val viewModel: BrowseContract.ViewModel) : 
         val cardView = viewHolder.view as BrowsingCardView
 
         when (item) {
-            is ContainerElement -> {
-                cardView.isFocusable = true
-                cardView.isFocusableInTouchMode = true
-                updateCardBackgroundColor(cardView, empty = false, selected = false)
+            is UpnpElement -> {
+                when (item.type) {
+                    UpnpElement.Type.CONTAINER -> {
+                        cardView.isFocusable = true
+                        cardView.isFocusableInTouchMode = true
+                        updateCardBackgroundColor(cardView, empty = false, selected = false)
 
-                cardView.setTitle(item.name)
-                cardView.setMainImage(R.drawable.ic_folder)
-            }
-            is VideoElement -> {
-                cardView.isFocusable = true
-                cardView.isFocusableInTouchMode = true
-                updateCardBackgroundColor(cardView, empty = false, selected = false)
+                        cardView.setTitle(item.name)
+                        cardView.setMainImage(R.drawable.ic_folder)
+                    }
+                    UpnpElement.Type.FILE -> {
+                        cardView.isFocusable = true
+                        cardView.isFocusableInTouchMode = true
+                        updateCardBackgroundColor(cardView, empty = false, selected = false)
 
-                cardView.setTitle(item.name)
+                        cardView.setTitle(item.name)
 
-                val uri = viewModel.getThumbnail(item)
-                uri?.let {
-                    Glide.with(viewHolder.view.context)
-                        .load(uri)
-                        .centerCrop()
-                        .error(mDefaultCardImage)
-                        .into(cardView.getMainImageView())
+                        val uri = viewModel.getThumbnail(item)
+                        uri?.let {
+                            Glide.with(viewHolder.view.context)
+                                .load(uri)
+                                .centerCrop()
+                                .error(mDefaultCardImage)
+                                .into(cardView.getMainImageView())
+                        }
+                    }
                 }
             }
             is ParametersElement -> {

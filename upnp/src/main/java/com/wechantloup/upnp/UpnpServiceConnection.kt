@@ -7,12 +7,10 @@ import android.content.ServiceConnection
 import android.os.IBinder
 import android.util.Log
 import com.bugsnag.android.Bugsnag
-import com.wechantloup.upnp.dataholder.ContainerElement
 import com.wechantloup.upnp.dataholder.DlnaRoot
 import com.wechantloup.upnp.dataholder.PlayableItem
 import com.wechantloup.upnp.dataholder.UpnpContainerData
 import com.wechantloup.upnp.dataholder.UpnpElement
-import com.wechantloup.upnp.dataholder.VideoElement
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -31,7 +29,6 @@ import org.fourthline.cling.support.contentdirectory.callback.Browse
 import org.fourthline.cling.support.model.BrowseFlag
 import org.fourthline.cling.support.model.DIDLContent
 import java.io.FileNotFoundException
-import java.lang.IllegalStateException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -44,7 +41,7 @@ class UpnpServiceConnection(
 
 //    private var lastPlayedElement: VideoElement? = null
     private lateinit var remoteService: RemoteService
-    private var currentElement: ContainerElement? = null
+    private var currentElement: UpnpElement? = null
     private var upnpService: AndroidUpnpService? = null
     private var bound: Boolean = false
     private val registryListener: BrowseRegistryListener =
@@ -56,7 +53,9 @@ class UpnpServiceConnection(
 
         // Get ready for future device advertisements
         upnpService.registry.addListener(registryListener)
-        findDevice()
+        scope.launch {
+            findDevice()
+        }
     }
 
     override fun onServiceDisconnected(className: ComponentName) {
@@ -87,21 +86,18 @@ class UpnpServiceConnection(
         }
     }
 
-    private fun findDevice() {
+    private suspend fun findDevice() {
         Log.i(TAG, "findDevice")
         root?.let {
             Log.i(TAG, "Trying to connect root ${it.mName}")
             if (currentElement == null) {
-                currentElement = ContainerElement(it.mPath, it.mName, null)
+                currentElement = UpnpElement(UpnpElement.Type.CONTAINER, it.mPath, it.mName, null)
             }
 
             val thread =
                 RetrieveDeviceThread(upnpService, it.mUdn, it.mUrl, it.mMaxAge, this)
             // ToDo to improve
-//            thread.start()
-            scope.launch {
-                withContext(Dispatchers.IO) { thread.run() }
-            }
+            withContext(Dispatchers.IO) { thread.run() }
         }
     }
 
@@ -145,7 +141,7 @@ class UpnpServiceConnection(
         }
     }
 
-    suspend fun parseAndUpdate(element: ContainerElement): UpnpContainerData =
+    suspend fun parseAndUpdate(element: UpnpElement): UpnpContainerData =
         suspendCoroutine { continuation ->
             upnpService?.controlPoint
                 ?.execute(object : Browse(remoteService, element.path, BrowseFlag.DIRECT_CHILDREN) {
@@ -180,11 +176,12 @@ class UpnpServiceConnection(
 
     private fun parseAndUpdate(
         didl: DIDLContent,
-        openedElement: ContainerElement
+        openedElement: UpnpElement
     ): UpnpContainerData {
         Log.i(TAG, "found " + didl.containers.size + " items.")
         val directories = didl.containers.map {
-            ContainerElement(
+            UpnpElement(
+                UpnpElement.Type.CONTAINER,
                 it.id,
                 it.title,
                 openedElement
@@ -193,7 +190,8 @@ class UpnpServiceConnection(
 
         Log.i(TAG, "found " + didl.items.size + " items.")
         val movies = didl.items.map {
-            VideoElement(
+            UpnpElement(
+                UpnpElement.Type.FILE,
                 it.resources[0].value,
                 it.title,
                 openedElement
@@ -207,40 +205,40 @@ class UpnpServiceConnection(
 
     suspend fun launch(element: UpnpElement): PlayableItem =
         suspendCoroutine { continuation ->
-            scope.launch {
-                if (element is ContainerElement) continuation.resumeWithException(IllegalStateException())
+            val parent = requireNotNull(element.parent)
+            if (element.type == UpnpElement.Type.CONTAINER) continuation.resumeWithException(IllegalStateException())
 
-                upnpService?.controlPoint
-                    ?.execute(object : Browse(remoteService, element.parentPath, BrowseFlag.DIRECT_CHILDREN) {
-                        override fun received(
-                            arg0: ActionInvocation<*>?,
-                            didl: DIDLContent
-                        ) {
-                            Log.i(TAG, "found " + didl.items.size + " items.")
-                            val movies = mutableListOf<UpnpElement>()
-                            didl.items.forEach {
-                                UpnpElement(
-                                    it.resources[0].value,
-                                    it.title,
-                                    ""
-                                ).also { element ->
-                                    movies.add(element)
-                                }
+            upnpService?.controlPoint
+                ?.execute(object : Browse(remoteService, parent.path, BrowseFlag.DIRECT_CHILDREN) {
+                    override fun received(
+                        arg0: ActionInvocation<*>?,
+                        didl: DIDLContent
+                    ) {
+                        Log.i(TAG, "found " + didl.items.size + " items.")
+                        val movies = mutableListOf<UpnpElement>()
+                        didl.items.forEach {
+                            UpnpElement(
+                                UpnpElement.Type.FILE,
+                                it.resources[0].value,
+                                it.title,
+                                parent
+                            ).also { element ->
+                                movies.add(element)
                             }
-                            val index = movies.indexOfFirst { it.path == element.path }
-
-                            if (index < 0) continuation.resumeWithException(FileNotFoundException())
-
-                            val item = PlayableItem(movies, index)
-                            continuation.resume(item)
                         }
+                        val index = movies.indexOfFirst { it.path == element.path }
 
-                        override fun updateStatus(status: Status) {}
-                        override fun failure(arg0: ActionInvocation<*>?, arg1: UpnpResponse, arg2: String) {
-                            continuation.resumeWithException(UpnpException(arg1))
-                        }
-                    })
-            }
+                        if (index < 0) continuation.resumeWithException(FileNotFoundException())
+
+                        val item = PlayableItem(movies, index)
+                        continuation.resume(item)
+                    }
+
+                    override fun updateStatus(status: Status) {}
+                    override fun failure(arg0: ActionInvocation<*>?, arg1: UpnpResponse, arg2: String) {
+                        continuation.resumeWithException(UpnpException(arg1))
+                    }
+                })
         }
 
 //    fun setLastPlayedElement(lastPlayedElement: VideoElement) {
