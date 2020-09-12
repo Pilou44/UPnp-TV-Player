@@ -3,8 +3,8 @@ package com.wechantloup.upnpvideoplayer.browse2
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.wechantloup.upnpvideoplayer.UPnPApplication
-import com.wechantloup.upnpvideoplayer.data.GetRootUseCase
-import com.wechantloup.upnpvideoplayer.data.repository.PreferencesRepository
+import com.wechantloup.upnpvideoplayer.data.useCase.GetRootUseCase
+import com.wechantloup.upnpvideoplayer.data.content.Preferences
 import com.wechantloup.upnpvideoplayer.data.repository.ThumbnailRepository
 import com.wechantloup.upnpvideoplayer.data.repository.VideoRepository
 
@@ -31,7 +31,7 @@ internal class BrowseViewModelFactory(
             return BrowseViewModelFactory(
                 application.videoRepository,
                 ThumbnailRepository(application),
-                GetRootUseCase(PreferencesRepository(application))
+                GetRootUseCase(application.rootRepository)
             )
         }
     }
