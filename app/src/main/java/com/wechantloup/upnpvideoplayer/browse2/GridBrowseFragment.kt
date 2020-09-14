@@ -20,9 +20,7 @@ import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
 import com.wechantloup.upnpvideoplayer.dialog.DialogFragment
 import com.wechantloup.upnpvideoplayer.dialog.DialogFragmentActivity
 import com.wechantloup.upnpvideoplayer.main.MainActivity
-import com.wechantloup.upnp.rootSetter.RootSetterActivity
-import com.wechantloup.upnp.rootSetter.RootSetterActivity.Companion.ARG_ROOT
-import com.wechantloup.core.utils.Serializer.deserialize
+import com.wechantloup.upnpvideoplayer.rootSetter.RootSetterActivity
 import com.wechantloup.core.utils.Serializer.serialize
 import com.wechantloup.upnpvideoplayer.data.dataholder.VideoPlayerElement
 import com.wechantloup.upnpvideoplayer.videoPlayer.VideoPlayerActivity
@@ -71,8 +69,7 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
             }
         } else if (requestCode == REQUEST_SETTING_DLNA_ROOT) {
             if (resultCode == RESULT_OK) {
-                val newRoot: com.wechantloup.upnp.dataholder.DlnaRoot = requireNotNull(data?.getStringExtra(ARG_ROOT)?.deserialize())
-                viewModel.resetRoot(newRoot)
+                viewModel.resetRoot()
             }
         } else {
             super.onActivityResult(requestCode, resultCode, data)

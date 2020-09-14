@@ -21,18 +21,18 @@ import kotlinx.coroutines.withContext
 internal class BrowseViewModel(
     private val videoRepository: VideoRepository,
     private val thumbnailRepository: ThumbnailRepository,
-    getRootUseCase: GetRootUseCase
+    private val getRootUseCase: GetRootUseCase
 ) : ViewModel(), BrowseContract.ViewModel, UpnpServiceConnection.Callback {
 
-    private lateinit var currentContainer: UpnpElement
-    private var root: UpnpElement? = getRootUseCase.execute()?.let {
-        UpnpElement(UpnpElement.Type.CONTAINER, it.mPath, it.mName, null)
-    }
+    private var currentContainer: UpnpElement? = null
+//    private var root: UpnpElement? = getRootUseCase.execute()?.let {
+//        UpnpElement(UpnpElement.Type.CONTAINER, it.mPath, it.mName, null)
+//    }
     private lateinit var view: BrowseContract.View
 
     private val upnpServiceConnection = UpnpServiceConnection(
-        getRootUseCase.execute(),
-        viewModelScope,
+//        getRootUseCase.execute(),
+//        viewModelScope,
         this
     )
 
@@ -66,8 +66,8 @@ internal class BrowseViewModel(
     }
 
     override fun goBack(): Boolean {
-        if (root == null) return false
-        val parent = currentContainer.parent ?: return false
+//        if (root == null) return false
+        val parent = currentContainer?.parent ?: return false
 
         viewModelScope.launch {
             val data = upnpServiceConnection.parseAndUpdate(parent)
@@ -93,8 +93,9 @@ internal class BrowseViewModel(
 //        upnpServiceConnection.setLastPlayedElement(lastPlayedElement)
     }
 
-    override fun resetRoot(newRoot: com.wechantloup.upnp.dataholder.DlnaRoot) {
-        upnpServiceConnection.resetRoot(newRoot)
+    override fun resetRoot() {
+        // ToDo
+//        upnpServiceConnection.resetRoot(getRootUseCase.execute())
     }
 
     override fun getThumbnail(item: UpnpElement): Uri? {
@@ -123,18 +124,36 @@ internal class BrowseViewModel(
 //        view.launch(movies, index, position)
 //    }
 
-    override fun onReady() {
-        root?.let {
+//    override fun onReady(rootContainer: UpnpElement) {
+//        root?.let {
+//            viewModelScope.launch {
+//                val data = upnpServiceConnection.parseAndUpdate(it)
+//                view.displayContent(data.container.name, emptyList(), data.folders, data.movies, null)
+//                currentContainer = it
+//            }
+//        }
+//    }
+
+    override fun onErrorConnectingServer() {
+        TODO("Not yet implemented")
+    }
+
+    override fun onServiceConnected() {
+        val root = getRootUseCase.execute()
+        if (currentContainer == null && root != null) {
             viewModelScope.launch {
-                val data = upnpServiceConnection.parseAndUpdate(it)
-                view.displayContent(data.container.name, emptyList(), data.folders, data.movies, null)
-                currentContainer = it
+                upnpServiceConnection.connectToDevice(root)
             }
         }
     }
 
-    override fun onErrorConnectingServer() {
-        TODO("Not yet implemented")
+    override fun onServerConnected(rootContainer: UpnpElement) {
+        currentContainer = rootContainer
+        viewModelScope.launch {
+            val data = upnpServiceConnection.parseAndUpdate(rootContainer)
+            view.displayContent(data.container.name, emptyList(), data.folders, data.movies, null)
+            currentContainer = rootContainer
+        }
     }
 
     private suspend fun retrieveThumbnail(element: UpnpElement) {

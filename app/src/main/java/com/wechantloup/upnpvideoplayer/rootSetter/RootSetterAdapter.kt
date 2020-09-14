@@ -1,4 +1,4 @@
-package com.wechantloup.upnp.rootSetter
+package com.wechantloup.upnpvideoplayer.rootSetter
 
 import android.graphics.Color
 import android.view.View
@@ -6,13 +6,13 @@ import android.view.ViewGroup
 import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.wechantloup.upnp.R
-import com.wechantloup.upnp.dataholder.DlnaElement
 import com.wechantloup.core.utils.ViewUtils.inflate
+import com.wechantloup.upnp.R
+import com.wechantloup.upnp.dataholder.UpnpElement
 
 class RootSetterAdapter(
-    private var list: List<DlnaElement>,
-    private var onItemClicked: (DlnaElement) -> Unit
+    private var list: List<UpnpElement>,
+    private var onItemClicked: (UpnpElement) -> Unit
 ): RecyclerView.Adapter<RootSetterAdapter.DlnaElementHolder>() {
 
     private var selectedElement = -1
@@ -47,7 +47,7 @@ class RootSetterAdapter(
             itemView.setOnClickListener { onItemClicked(element) }
             val padding: Int = holder.layout.paddingRight
             layout.setPadding(
-                padding * (element.indent + 1),
+                padding * (element.indent() + 1),
                 padding, padding, padding
             )
             if (position == selectedElement) {
@@ -68,5 +68,15 @@ class RootSetterAdapter(
         selectedElement = position
         notifyItemChanged(oldSelection)
         notifyItemChanged(selectedElement)
+    }
+
+    private fun UpnpElement.indent(): Int {
+        var indentation = 0
+        var parent = this.parent
+        while (parent != null) {
+            indentation++
+            parent = parent.parent
+        }
+        return indentation
     }
 }

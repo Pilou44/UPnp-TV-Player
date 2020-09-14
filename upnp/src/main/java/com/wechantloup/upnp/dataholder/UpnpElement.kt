@@ -4,7 +4,8 @@ open class UpnpElement(
     val type: Type,
     open val path: String,
     open val name: String,
-    open val parent: UpnpElement?
+    open val parent: UpnpElement?,
+    val server: DlnaServer
 ) {
     override fun equals(other: Any?): Boolean {
         return other is UpnpElement && path == other.path

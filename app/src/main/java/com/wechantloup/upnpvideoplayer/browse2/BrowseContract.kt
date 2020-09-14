@@ -32,6 +32,6 @@ internal interface BrowseContract {
         fun getThumbnail(item: UpnpElement): Uri?
         fun launch(element: UpnpElement, position: Long = 0)
         fun setLastPlayedElementPath(lastPlayedElement: String)
-        fun resetRoot(newRoot: DlnaRoot)
+        fun resetRoot()
     }
 }

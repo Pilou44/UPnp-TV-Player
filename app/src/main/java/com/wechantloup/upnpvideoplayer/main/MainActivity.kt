@@ -9,7 +9,7 @@ import android.widget.CheckBox
 import com.wechantloup.upnpvideoplayer.MainActivity
 import com.wechantloup.upnpvideoplayer.R
 import com.wechantloup.upnpvideoplayer.browse2.SuperBrowseActivity
-import com.wechantloup.upnp.rootSetter.RootSetterActivity
+import com.wechantloup.upnpvideoplayer.rootSetter.RootSetterActivity
 
 class MainActivity : Activity() {
 
