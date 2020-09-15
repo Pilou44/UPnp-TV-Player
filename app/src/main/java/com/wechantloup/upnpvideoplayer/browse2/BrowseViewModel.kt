@@ -9,15 +9,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wechantloup.upnp.UpnpServiceConnection
 import com.wechantloup.upnp.dataholder.UpnpElement
-import com.wechantloup.upnpvideoplayer.data.useCase.GetRootUseCase
 import com.wechantloup.upnpvideoplayer.data.repository.ThumbnailRepository
 import com.wechantloup.upnpvideoplayer.data.repository.VideoRepository
+import com.wechantloup.upnpvideoplayer.data.useCase.GetRootUseCase
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+@OptIn(ExperimentalCoroutinesApi::class)
 internal class BrowseViewModel(
     private val videoRepository: VideoRepository,
     private val thumbnailRepository: ThumbnailRepository,
@@ -40,7 +42,6 @@ internal class BrowseViewModel(
 
     init {
         viewModelScope.launch {
-            @Suppress("EXPERIMENTAL_API_USAGE")
             requestChannel.consumeEach { retrieveThumbnail(it) }
         }
     }
@@ -94,8 +95,8 @@ internal class BrowseViewModel(
     }
 
     override fun resetRoot() {
-        // ToDo
-//        upnpServiceConnection.resetRoot(getRootUseCase.execute())
+        Log.i(TAG, "Reset root")
+        currentContainer = null
     }
 
     override fun getThumbnail(item: UpnpElement): Uri? {
@@ -141,6 +142,7 @@ internal class BrowseViewModel(
     override fun onServiceConnected() {
         val root = getRootUseCase.execute()
         if (currentContainer == null && root != null) {
+            Log.i(TAG, "Connect to root ${root.mName}")
             viewModelScope.launch {
                 upnpServiceConnection.connectToDevice(root)
             }
@@ -148,6 +150,7 @@ internal class BrowseViewModel(
     }
 
     override fun onServerConnected(rootContainer: UpnpElement) {
+        Log.i(TAG, "Parse root container ${rootContainer.name}")
         currentContainer = rootContainer
         viewModelScope.launch {
             val data = upnpServiceConnection.parseAndUpdate(rootContainer)

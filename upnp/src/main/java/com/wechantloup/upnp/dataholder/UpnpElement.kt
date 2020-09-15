@@ -8,7 +8,7 @@ open class UpnpElement(
     val server: DlnaServer
 ) {
     override fun equals(other: Any?): Boolean {
-        return other is UpnpElement && path == other.path
+        return other is UpnpElement && path == other.path && server.info.mUrl == other.server.info.mUrl
     }
 
     enum class Type {

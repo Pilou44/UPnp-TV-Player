@@ -2,7 +2,6 @@ package com.wechantloup.upnpvideoplayer.rootSetter
 
 import android.content.Intent
 import android.os.Bundle
-import android.preference.PreferenceManager
 import android.util.Log
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
@@ -10,7 +9,11 @@ import androidx.recyclerview.widget.RecyclerView
 import com.wechantloup.core.utils.Serializer.serialize
 import com.wechantloup.upnp.R
 import com.wechantloup.upnp.UpnpServiceConnection
+import com.wechantloup.upnp.dataholder.DlnaRoot
 import com.wechantloup.upnp.dataholder.UpnpElement
+import com.wechantloup.upnpvideoplayer.UPnPApplication
+import com.wechantloup.upnpvideoplayer.data.useCase.SetRootUseCase
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
 
@@ -20,6 +23,7 @@ class RootSetterActivity : FragmentActivity(), UpnpServiceConnection.Callback {
     private lateinit var list: RecyclerView
     private lateinit var adapter: RootSetterAdapter
     private val mAllFiles = mutableListOf<UpnpElement>()
+    private val setRootUseCase: SetRootUseCase by lazy { SetRootUseCase((application as UPnPApplication).rootRepository) }
 
     private val upnpServiceConnection = UpnpServiceConnection(this)
 
@@ -47,7 +51,7 @@ class RootSetterActivity : FragmentActivity(), UpnpServiceConnection.Callback {
         if (element == null) {
             setResult(RESULT_CANCELED)
         } else {
-            val root = com.wechantloup.upnp.dataholder.DlnaRoot(
+            val root = DlnaRoot(
                 element.name,
                 element.server.info.mUdn,
                 element.server.info.mUrl,
@@ -61,9 +65,8 @@ class RootSetterActivity : FragmentActivity(), UpnpServiceConnection.Callback {
         finish()
     }
 
-    private fun exportRoot(root: com.wechantloup.upnp.dataholder.DlnaRoot) {
-        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
-        prefs.edit().putString("ROOT", root.serialize()).apply()
+    private fun exportRoot(root: DlnaRoot) {
+        setRootUseCase.execute(root)
     }
 
     private fun onItemClick(element: UpnpElement) {
@@ -81,6 +84,7 @@ class RootSetterActivity : FragmentActivity(), UpnpServiceConnection.Callback {
         TODO("Not yet implemented")
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun onServiceConnected() {
         lifecycleScope.launch {
             Log.i(TAG, "Search for UPnP devices")
