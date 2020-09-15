@@ -202,8 +202,6 @@ class UpnpServiceConnection(private val callback: Callback) : ServiceConnection,
 
                     override fun updateStatus(status: Status) {}
                     override fun failure(arg0: ActionInvocation<*>?, arg1: UpnpResponse, arg2: String) {
-
-
                         continuation.resumeWithException(UpnpException(arg1))
                     }
                 })

@@ -11,18 +11,18 @@ import androidx.leanback.widget.FocusHighlight
 import androidx.leanback.widget.ObjectAdapter
 import androidx.leanback.widget.VerticalGridPresenter
 import androidx.lifecycle.ViewModelProvider
+import com.wechantloup.core.utils.Serializer.serialize
 import com.wechantloup.upnp.dataholder.PlayableItem
 import com.wechantloup.upnp.dataholder.UpnpElement
 import com.wechantloup.upnpvideoplayer.R
 import com.wechantloup.upnpvideoplayer.UPnPApplication
 import com.wechantloup.upnpvideoplayer.data.dataholder.ParametersElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
+import com.wechantloup.upnpvideoplayer.data.dataholder.VideoPlayerElement
 import com.wechantloup.upnpvideoplayer.dialog.DialogFragment
 import com.wechantloup.upnpvideoplayer.dialog.DialogFragmentActivity
 import com.wechantloup.upnpvideoplayer.main.MainActivity
 import com.wechantloup.upnpvideoplayer.rootSetter.RootSetterActivity
-import com.wechantloup.core.utils.Serializer.serialize
-import com.wechantloup.upnpvideoplayer.data.dataholder.VideoPlayerElement
 import com.wechantloup.upnpvideoplayer.videoPlayer.VideoPlayerActivity
 import com.wechantloup.upnpvideoplayer.widgets.BrowseTitleView
 

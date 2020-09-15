@@ -10,6 +10,7 @@ import com.bumptech.glide.Glide
 import com.wechantloup.upnp.dataholder.UpnpElement
 import com.wechantloup.upnpvideoplayer.R
 import com.wechantloup.upnpvideoplayer.data.dataholder.ParametersElement
+import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
 import com.wechantloup.upnpvideoplayer.widgets.BrowsingCardView
 import kotlin.properties.Delegates
 
@@ -45,23 +46,24 @@ internal class CardPresenter(private val viewModel: BrowseContract.ViewModel) : 
         val cardView = viewHolder.view as BrowsingCardView
 
         when (item) {
+            is StartedVideoElement -> {
+                cardView.isFocusable = true
+                cardView.isFocusableInTouchMode = true
+                updateCardBackgroundColor(cardView, empty = false, selected = false)
+
+                cardView.setTitle(item.name)
+            }
             is UpnpElement -> {
+                cardView.isFocusable = true
+                cardView.isFocusableInTouchMode = true
+                updateCardBackgroundColor(cardView, empty = false, selected = false)
+
+                cardView.setTitle(item.name)
                 when (item.type) {
                     UpnpElement.Type.CONTAINER -> {
-                        cardView.isFocusable = true
-                        cardView.isFocusableInTouchMode = true
-                        updateCardBackgroundColor(cardView, empty = false, selected = false)
-
-                        cardView.setTitle(item.name)
                         cardView.setMainImage(R.drawable.ic_folder)
                     }
                     UpnpElement.Type.FILE -> {
-                        cardView.isFocusable = true
-                        cardView.isFocusableInTouchMode = true
-                        updateCardBackgroundColor(cardView, empty = false, selected = false)
-
-                        cardView.setTitle(item.name)
-
                         val uri = viewModel.getThumbnail(item)
                         uri?.let {
                             Glide.with(viewHolder.view.context)

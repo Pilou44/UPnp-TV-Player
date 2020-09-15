@@ -9,7 +9,7 @@ import com.wechantloup.upnp.dataholder.UpnpElement
 data class StartedVideoElement(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val path: String,
-    val parentPath: String,
+    val containerId: String,
     val name: String,
     val position: Long,
     val date: Long

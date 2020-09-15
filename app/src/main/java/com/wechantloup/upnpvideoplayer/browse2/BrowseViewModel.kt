@@ -60,10 +60,15 @@ internal class BrowseViewModel(
 
     override fun parse(item: UpnpElement) {
         viewModelScope.launch {
-            val data = upnpServiceConnection.parseAndUpdate(item)
-            view.displayContent(data.container.name, emptyList(), data.folders, data.movies, null)
-            currentContainer = item
+            display(item, null)
         }
+    }
+
+    private suspend fun display(item: UpnpElement, selectedElement: UpnpElement?) {
+        val data = upnpServiceConnection.parseAndUpdate(item)
+        val startedMovies = videoRepository.getAllVideo()
+        view.displayContent(data.container.name, startedMovies, data.folders, data.movies, selectedElement)
+        currentContainer = item
     }
 
     override fun goBack(): Boolean {
@@ -71,9 +76,7 @@ internal class BrowseViewModel(
         val parent = currentContainer?.parent ?: return false
 
         viewModelScope.launch {
-            val data = upnpServiceConnection.parseAndUpdate(parent)
-            view.displayContent(data.container.name, emptyList(), data.folders, data.movies, currentContainer)
-            currentContainer = parent
+            display(parent, currentContainer)
         }
         return true
     }
@@ -151,11 +154,8 @@ internal class BrowseViewModel(
 
     override fun onServerConnected(rootContainer: UpnpElement) {
         Log.i(TAG, "Parse root container ${rootContainer.name}")
-        currentContainer = rootContainer
         viewModelScope.launch {
-            val data = upnpServiceConnection.parseAndUpdate(rootContainer)
-            view.displayContent(data.container.name, emptyList(), data.folders, data.movies, null)
-            currentContainer = rootContainer
+            display(rootContainer, null)
         }
     }
 
