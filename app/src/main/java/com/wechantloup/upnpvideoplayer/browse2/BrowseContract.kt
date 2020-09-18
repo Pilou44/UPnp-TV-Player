@@ -3,8 +3,7 @@ package com.wechantloup.upnpvideoplayer.browse2
 import android.content.Context
 import android.net.Uri
 import com.wechantloup.upnp.dataholder.UpnpElement
-import com.wechantloup.upnp.dataholder.DlnaRoot
-import com.wechantloup.upnp.dataholder.PlayableItem
+import com.wechantloup.upnpvideoplayer.data.dataholder.AppPlayableItem
 import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
 
 internal interface BrowseContract {
@@ -17,7 +16,7 @@ internal interface BrowseContract {
             selectedElement: UpnpElement?
         )
         fun launch(
-            playableItem: PlayableItem,
+            playableItem: AppPlayableItem,
             position: Long
         )
         fun refreshItem(item: Any)
@@ -32,7 +31,7 @@ internal interface BrowseContract {
         fun getThumbnail(item: UpnpElement): Uri?
         fun launch(element: UpnpElement, position: Long = 0)
         fun launch(element: StartedVideoElement, position: Long = 0)
-        fun setLastPlayedElementPath(lastPlayedElement: String)
+        fun setLastPlayedElementPath(lastPlayedElement: StartedVideoElement)
         fun resetRoot()
     }
 }

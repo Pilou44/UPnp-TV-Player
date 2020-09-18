@@ -8,9 +8,9 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wechantloup.upnp.UpnpServiceConnection
-import com.wechantloup.upnp.dataholder.DlnaRoot
-import com.wechantloup.upnp.dataholder.DlnaServer
+import com.wechantloup.upnp.dataholder.PlayableItem
 import com.wechantloup.upnp.dataholder.UpnpElement
+import com.wechantloup.upnpvideoplayer.data.dataholder.AppPlayableItem
 import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
 import com.wechantloup.upnpvideoplayer.data.repository.ThumbnailRepository
 import com.wechantloup.upnpvideoplayer.data.repository.VideoRepository
@@ -85,6 +85,9 @@ internal class BrowseViewModel(
     }
 
     override fun launch(element: StartedVideoElement, position: Long) {
+        viewModelScope.launch {
+            videoRepository.removeVideo(element)
+        }
         val current = currentContainer ?: return
         val server = current.server
         val parent = UpnpElement(
@@ -110,14 +113,15 @@ internal class BrowseViewModel(
 //            if (element is StartedVideoElement) {
 //                videoRepository.removeVideo(element)
 //            }
-            val item = upnpServiceConnection.launch(element)
+            val item = upnpServiceConnection.launch(element).toAppPlayableItem()
             view.launch(item, position)
         }
     }
 
-    override fun setLastPlayedElementPath(lastPlayedElement: String) {
-        // ToDo
-//        upnpServiceConnection.setLastPlayedElement(lastPlayedElement)
+    override fun setLastPlayedElementPath(lastPlayedElement: StartedVideoElement) {
+        viewModelScope.launch {
+            videoRepository.writeVideoElement(lastPlayedElement)
+        }
     }
 
     override fun resetRoot() {
@@ -221,6 +225,22 @@ internal class BrowseViewModel(
         if (longDuration < 0L) return DEFAULT_TIME_TO_CAPTURE
 
         return longDuration * 100L / PERCENT_FOR_CAPTURE
+    }
+
+    private fun PlayableItem.toAppPlayableItem(): AppPlayableItem {
+        return AppPlayableItem(
+            movies.map {
+                StartedVideoElement(
+                    0,
+                    it.path,
+                    it.parent!!.path,
+                    it.name,
+                    0,
+                    0
+                )
+            },
+            startIndex
+        )
     }
 
     companion object {

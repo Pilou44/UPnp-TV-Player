@@ -10,15 +10,11 @@ import android.view.KeyEvent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.lifecycleScope
 import com.wechantloup.core.utils.Serializer.deserialize
 import com.wechantloup.core.utils.Serializer.serialize
 import com.wechantloup.upnpvideoplayer.R
-import com.wechantloup.upnpvideoplayer.UPnPApplication
 import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
-import com.wechantloup.upnpvideoplayer.data.dataholder.VideoPlayerElement
 import com.wechantloup.upnpvideoplayer.videoPlayer.ControlsOverlay.ControlsOverlayListener
-import kotlinx.coroutines.launch
 import org.videolan.libvlc.LibVLC
 import org.videolan.libvlc.Media
 import org.videolan.libvlc.MediaPlayer
@@ -30,8 +26,8 @@ class VideoPlayerActivity : AppCompatActivity(), ControlsOverlayListener {
     private var mLibVLC: LibVLC? = null
     private var mMediaPlayer: MediaPlayer? = null
     private var controls: ControlsOverlay? = null
-    private var list: List<VideoPlayerElement>? = null
-    private var current: VideoPlayerElement? = null
+    private var list: List<StartedVideoElement>? = null
+    private var current: StartedVideoElement? = null
     private var index = 0
     private var position = 0L
     override val duration = MutableLiveData<Long>()
@@ -53,7 +49,7 @@ class VideoPlayerActivity : AppCompatActivity(), ControlsOverlayListener {
         mMediaPlayer = MediaPlayer(mLibVLC)
         mVideoLayout = findViewById(R.id.video_layout)
         controls = findViewById(R.id.controls)
-        list = intent.getStringArrayListExtra(EXTRA_URLS).map { it.deserialize<VideoPlayerElement>() }
+        list = intent.getStringArrayListExtra(EXTRA_URLS).map { it.deserialize<StartedVideoElement>() }
         index = intent.getIntExtra(EXTRA_INDEX, 0) - 1
         position = intent.getLongExtra(EXTRA_POSITION, 0L)
     }
@@ -83,26 +79,14 @@ class VideoPlayerActivity : AppCompatActivity(), ControlsOverlayListener {
         if (controls!!.isOpened) {
             controls!!.hide()
         } else {
-            saveCurrent()
             finishWithResult()
         }
     }
 
-    private fun saveCurrent() {
-        // ToDo
-//        val current = list!![index]
-//        val currentPosition = mMediaPlayer!!.time
-//        val currentTime = System.currentTimeMillis()
-//        val savableElement = StartedVideoElement(current, currentPosition, currentTime)
-//        lifecycleScope.launch {
-//            Log.i("TEST", "Save an element")
-//            (applicationContext as UPnPApplication).videoRepository.writeVideoElement(savableElement)
-//        }
-    }
-
     private fun finishWithResult() {
         val returnIntent = Intent()
-        returnIntent.putExtra(ELEMENT, current?.serialize())
+        val element = current?.copy(position = mMediaPlayer!!.time, date = System.currentTimeMillis())
+        returnIntent.putExtra(ELEMENT, element?.serialize())
         setResult(Activity.RESULT_OK, returnIntent)
         finish()
     }

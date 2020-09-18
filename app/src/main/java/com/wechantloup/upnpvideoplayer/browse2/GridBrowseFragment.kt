@@ -11,14 +11,14 @@ import androidx.leanback.widget.FocusHighlight
 import androidx.leanback.widget.ObjectAdapter
 import androidx.leanback.widget.VerticalGridPresenter
 import androidx.lifecycle.ViewModelProvider
+import com.wechantloup.core.utils.Serializer.deserialize
 import com.wechantloup.core.utils.Serializer.serialize
-import com.wechantloup.upnp.dataholder.PlayableItem
 import com.wechantloup.upnp.dataholder.UpnpElement
 import com.wechantloup.upnpvideoplayer.R
 import com.wechantloup.upnpvideoplayer.UPnPApplication
+import com.wechantloup.upnpvideoplayer.data.dataholder.AppPlayableItem
 import com.wechantloup.upnpvideoplayer.data.dataholder.ParametersElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
-import com.wechantloup.upnpvideoplayer.data.dataholder.VideoPlayerElement
 import com.wechantloup.upnpvideoplayer.dialog.DialogFragment
 import com.wechantloup.upnpvideoplayer.dialog.DialogFragmentActivity
 import com.wechantloup.upnpvideoplayer.main.MainActivity
@@ -61,8 +61,9 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == REQUEST_MEDIA_PLAYER) {
             if (resultCode == RESULT_OK) {
-                val lastPlayedElement: String? =
-                    data?.getStringExtra(VideoPlayerActivity.ELEMENT)
+                val lastPlayedElement: StartedVideoElement? = data
+                    ?.getStringExtra(VideoPlayerActivity.ELEMENT)
+                    ?.deserialize()
                 lastPlayedElement?.let {
                     viewModel.setLastPlayedElementPath(lastPlayedElement)
                 }
@@ -141,11 +142,10 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
         viewModel.launch(element)
     }
 
-    override fun launch(playableItem: PlayableItem, position: Long) {
+    override fun launch(playableItem: AppPlayableItem, position: Long) {
         playableItem.apply {
             Log.i(TAG, "Launch ${movies[startIndex].name}")
-            val elements = movies.map { VideoPlayerElement(it.name, it.path) }
-            val arrayList = ArrayList<String>().apply { addAll(elements.map { it.serialize() }) }
+            val arrayList = ArrayList<String>().apply { addAll(movies.map { it.serialize() }) }
             val intent = Intent(activity, VideoPlayerActivity::class.java)
             intent.putExtra(VideoPlayerActivity.EXTRA_URLS, arrayList)
             intent.putExtra(VideoPlayerActivity.EXTRA_INDEX, startIndex)
