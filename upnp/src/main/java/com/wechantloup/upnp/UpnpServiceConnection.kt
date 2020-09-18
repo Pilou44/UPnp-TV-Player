@@ -169,15 +169,16 @@ class UpnpServiceConnection(private val callback: Callback) : ServiceConnection,
         }
     }
 
-    suspend fun parseAndUpdate(element: UpnpElement): UpnpContainerData =
-        suspendCoroutine { continuation ->
+    suspend fun parseAndUpdate(element: UpnpElement): UpnpContainerData {
+        val checkedElement = checkService(element)
+        return suspendCoroutine { continuation ->
             upnpService?.controlPoint
-                ?.execute(object : Browse(element.server.service, element.path, BrowseFlag.DIRECT_CHILDREN) {
+                ?.execute(object : Browse(checkedElement.server.service, checkedElement.path, BrowseFlag.DIRECT_CHILDREN) {
                     override fun received(
                         arg0: ActionInvocation<*>?,
                         didl: DIDLContent
                     ) {
-                        continuation.resume(parseAndUpdate(didl, element))
+                        continuation.resume(parseAndUpdate(didl, checkedElement))
                     }
 
                     override fun updateStatus(status: Status) {}
@@ -186,6 +187,15 @@ class UpnpServiceConnection(private val callback: Callback) : ServiceConnection,
                     }
                 })
         }
+    }
+
+    private suspend fun checkService(element: UpnpElement): UpnpElement {
+        if (element.server.service != null) return element
+
+        val remoteService = retrieveService(element.server.info)
+        val server = DlnaServer(element.server.info, remoteService)
+        return element.copy(server = server)
+    }
 
     private fun parseAndUpdate(
         didl: DIDLContent,
@@ -216,8 +226,9 @@ class UpnpServiceConnection(private val callback: Callback) : ServiceConnection,
         return UpnpContainerData(openedElement, directories, movies)
     }
 
-    suspend fun launch(element: UpnpElement): PlayableItem =
-        suspendCoroutine { continuation ->
+    suspend fun launch(elementToLaunch: UpnpElement): PlayableItem {
+        val element = checkService(elementToLaunch)
+        return suspendCoroutine { continuation ->
             val parent = requireNotNull(element.parent)
             if (element.type == UpnpElement.Type.CONTAINER) continuation.resumeWithException(IllegalStateException())
 
@@ -254,6 +265,7 @@ class UpnpServiceConnection(private val callback: Callback) : ServiceConnection,
                     }
                 })
         }
+    }
 
     interface Callback {
 //        fun onErrorConnectingServer()

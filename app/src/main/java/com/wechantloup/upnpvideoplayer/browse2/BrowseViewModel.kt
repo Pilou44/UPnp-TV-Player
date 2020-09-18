@@ -8,7 +8,10 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wechantloup.upnp.UpnpServiceConnection
+import com.wechantloup.upnp.dataholder.DlnaRoot
+import com.wechantloup.upnp.dataholder.DlnaServer
 import com.wechantloup.upnp.dataholder.UpnpElement
+import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
 import com.wechantloup.upnpvideoplayer.data.repository.ThumbnailRepository
 import com.wechantloup.upnpvideoplayer.data.repository.VideoRepository
 import com.wechantloup.upnpvideoplayer.data.useCase.GetRootUseCase
@@ -79,6 +82,26 @@ internal class BrowseViewModel(
             display(parent, currentContainer)
         }
         return true
+    }
+
+    override fun launch(element: StartedVideoElement, position: Long) {
+        val current = currentContainer ?: return
+        val server = current.server
+        val parent = UpnpElement(
+            UpnpElement.Type.CONTAINER,
+            element.containerId,
+            "",
+            null,
+            server
+        )
+        val upnpElement = UpnpElement(
+            UpnpElement.Type.FILE,
+            element.path,
+            element.name,
+            parent,
+            server
+        )
+        launch(upnpElement, position)
     }
 
     override fun launch(element: UpnpElement, position: Long) {

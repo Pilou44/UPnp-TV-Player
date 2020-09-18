@@ -4,5 +4,5 @@ import org.fourthline.cling.model.meta.RemoteService
 
 class DlnaServer(
     val info: DlnaRoot,
-    val service: RemoteService
+    val service: RemoteService?
 )

@@ -1,10 +1,10 @@
 package com.wechantloup.upnp.dataholder
 
-open class UpnpElement(
+data class UpnpElement(
     val type: Type,
-    open val path: String,
-    open val name: String,
-    open val parent: UpnpElement?,
+    val path: String,
+    val name: String,
+    val parent: UpnpElement?,
     val server: DlnaServer
 ) {
     override fun equals(other: Any?): Boolean {

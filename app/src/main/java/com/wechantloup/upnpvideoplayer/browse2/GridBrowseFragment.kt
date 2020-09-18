@@ -134,11 +134,11 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
     }
 
     private fun launchAndContinue(element: StartedVideoElement) {
-//        viewModel.launch(element, element.position)
+        viewModel.launch(element, element.position)
     }
 
     private fun launchFromStart(element: StartedVideoElement) {
-//        viewModel.launch(element)
+        viewModel.launch(element)
     }
 
     override fun launch(playableItem: PlayableItem, position: Long) {

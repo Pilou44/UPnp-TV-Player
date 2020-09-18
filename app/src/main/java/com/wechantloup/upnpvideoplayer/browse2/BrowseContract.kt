@@ -31,6 +31,7 @@ internal interface BrowseContract {
         fun goBack(): Boolean
         fun getThumbnail(item: UpnpElement): Uri?
         fun launch(element: UpnpElement, position: Long = 0)
+        fun launch(element: StartedVideoElement, position: Long = 0)
         fun setLastPlayedElementPath(lastPlayedElement: String)
         fun resetRoot()
     }
