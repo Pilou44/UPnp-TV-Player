@@ -138,26 +138,27 @@ internal class BrowseViewModel(
 //        }
 //    }
 
-    override fun onErrorConnectingServer() {
-        TODO("Not yet implemented")
-    }
+//    override fun onErrorConnectingServer() {
+//        TODO("Not yet implemented")
+//    }
 
     override fun onServiceConnected() {
         val root = getRootUseCase.execute()
         if (currentContainer == null && root != null) {
             Log.i(TAG, "Connect to root ${root.mName}")
             viewModelScope.launch {
-                upnpServiceConnection.connectToDevice(root)
+                val rootContainer = upnpServiceConnection.getRootContainer(root)
+                display(rootContainer, null)
             }
         }
     }
 
-    override fun onServerConnected(rootContainer: UpnpElement) {
-        Log.i(TAG, "Parse root container ${rootContainer.name}")
-        viewModelScope.launch {
-            display(rootContainer, null)
-        }
-    }
+//    override fun onServerConnected(rootContainer: UpnpElement) {
+//        Log.i(TAG, "Parse root container ${rootContainer.name}")
+//        viewModelScope.launch {
+//            display(rootContainer, null)
+//        }
+//    }
 
     private suspend fun retrieveThumbnail(element: UpnpElement) {
         val uri: Uri? = thumbnailRepository.getElementThumbnail(element)

@@ -32,6 +32,9 @@ import org.fourthline.cling.support.contentdirectory.callback.Browse
 import org.fourthline.cling.support.model.BrowseFlag
 import org.fourthline.cling.support.model.DIDLContent
 import java.io.FileNotFoundException
+import java.util.Timer
+import java.util.concurrent.TimeoutException
+import kotlin.concurrent.schedule
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -59,15 +62,46 @@ class UpnpServiceConnection(private val callback: Callback) : ServiceConnection,
         Bugsnag.notify(Exception("Device not found"))
     }
 
-    suspend fun connectToDevice(root: DlnaRoot) {
-        val service = requireNotNull(upnpService)
-        // Get ready for future device advertisements
-        usedListener = BrowseRegistryListener(root, ::deviceAdded)
-        service.registry.addListener(usedListener)
-        withContext(Dispatchers.IO) {
-            findDevice(root)
+    suspend fun getRootContainer(root: DlnaRoot): UpnpElement {
+        val remoteService = withContext(Dispatchers.IO) {
+            retrieveService(root)
         }
+        val server = DlnaServer(root, remoteService)
+        val rootContainer = UpnpElement(
+            UpnpElement.Type.CONTAINER,
+            root.mPath,
+            root.mName,
+            null,
+            server
+        )
+        return rootContainer
     }
+
+    private suspend fun retrieveService(root: DlnaRoot): RemoteService =
+        suspendCoroutine { continuation ->
+            val timeOutTimer = Timer("TimeOut", false).schedule(30000) {
+                continuation.resumeWithException(TimeoutException())
+            }
+            val service = requireNotNull(upnpService)
+            // Get ready for future device advertisements
+            val listener = BrowseRegistryListener(root) { listener: BrowseRegistryListener, dlnaRoot: DlnaRoot, device: Device<*, *, *> ->
+                if (device.isFullyHydrated) {
+                    @Suppress("UNCHECKED_CAST")
+                    for (remoteService in device.services as Array<RemoteService>) {
+                        if (remoteService.serviceType.type == "ContentDirectory") {
+                            timeOutTimer.cancel()
+                            service.registry.removeListener(listener)
+                            continuation.resume(remoteService)
+                        }
+                    }
+                }
+
+            }
+            service.registry.addListener(listener)
+            val thread =
+            RetrieveDeviceThread(upnpService, root.mUdn, root.mUrl, root.mMaxAge, this)
+            thread.run()
+        }
 
     fun findDevices(scope: CoroutineScope): Channel<UpnpElement> {
         val service = requireNotNull(upnpService)
@@ -105,42 +139,6 @@ class UpnpServiceConnection(private val callback: Callback) : ServiceConnection,
         }
     }
 
-    private suspend fun findDevice(root: DlnaRoot) {
-        Log.i(TAG, "findDevice")
-        Log.i(TAG, "Trying to connect root ${root.mName}")
-
-        val thread =
-            RetrieveDeviceThread(upnpService, root.mUdn, root.mUrl, root.mMaxAge, this)
-        // ToDo to improve
-        withContext(Dispatchers.IO) { thread.run() }
-    }
-
-    private fun deviceAdded(root: DlnaRoot, device: Device<*, *, *>) {
-        if (device.type.type == "MediaServer") {
-            Log.i(TAG, "Found media server")
-            if (device.isFullyHydrated) {
-                @Suppress("UNCHECKED_CAST")
-                for (service in device.services as Array<RemoteService>) {
-                    if (service.serviceType.type == "ContentDirectory") {
-                        Log.i(TAG, "ContentDirectory found")
-                        val server = DlnaServer(
-                            root,
-                            service
-                        )
-                        val rootContainer = UpnpElement(
-                            UpnpElement.Type.CONTAINER,
-                            root.mPath,
-                            root.mName,
-                            null,
-                            server
-                        )
-                        callback.onServerConnected(rootContainer)
-                    }
-                }
-            }
-        }
-    }
-
     private fun addDevice(channel: Channel<UpnpElement>, scope: CoroutineScope, device: Device<*, *, *>) {
         if (device.isFullyHydrated) {
             for (service in device.services) {
@@ -166,24 +164,6 @@ class UpnpServiceConnection(private val callback: Callback) : ServiceConnection,
                     scope.launch {
                         channel.send(rootContainer)
                     }
-                    // Todo
-//                    val d = DlnaElement(
-//                        device,
-//                        service as RemoteService
-//                    )
-//                    var position: Int = mAllFiles.indexOf(d)
-//                    if (position >= 0) {
-//                        Log.i(TAG, "Replace device")
-//                        // Device already in the list, re-set new value at same position
-//                        mAllFiles.remove(d)
-//                        mAllFiles.add(position, d)
-//                        adapter.notifyItemChanged(position)
-//                    } else {
-//                        Log.i(TAG, "Add new device")
-//                        mAllFiles.add(d)
-//                        position = mAllFiles.indexOf(d)
-//                        adapter.notifyItemInserted(position)
-//                    }
                 }
             }
         }
@@ -276,14 +256,14 @@ class UpnpServiceConnection(private val callback: Callback) : ServiceConnection,
         }
 
     interface Callback {
-        fun onErrorConnectingServer()
+//        fun onErrorConnectingServer()
         fun onServiceConnected()
-        fun onServerConnected(rootContainer: UpnpElement)
+//        fun onServerConnected(rootContainer: UpnpElement)
     }
 
     private class BrowseRegistryListener(
         private val root: DlnaRoot,
-        private val onDeviceAdded: (DlnaRoot, Device<*, *, *>) -> Unit
+        private val onDeviceAdded: (BrowseRegistryListener, DlnaRoot, Device<*, *, *>) -> Unit
     ) :
         DefaultRegistryListener() {
 
@@ -296,7 +276,7 @@ class UpnpServiceConnection(private val callback: Callback) : ServiceConnection,
         }
 
         override fun remoteDeviceAdded(registry: Registry, device: RemoteDevice) {
-            onDeviceAdded(root, device)
+            onDeviceAdded(this, root, device)
         }
 
         override fun remoteDeviceRemoved(registry: Registry, device: RemoteDevice) {

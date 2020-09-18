@@ -80,9 +80,9 @@ class RootSetterActivity : FragmentActivity(), UpnpServiceConnection.Callback {
         }
     }
 
-    override fun onErrorConnectingServer() {
-        TODO("Not yet implemented")
-    }
+//    override fun onErrorConnectingServer() {
+//        TODO("Not yet implemented")
+//    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun onServiceConnected() {
@@ -109,9 +109,9 @@ class RootSetterActivity : FragmentActivity(), UpnpServiceConnection.Callback {
         }
     }
 
-    override fun onServerConnected(rootContainer: UpnpElement) {
-        TODO("Not yet implemented")
-    }
+//    override fun onServerConnected(rootContainer: UpnpElement) {
+//        TODO("Not yet implemented")
+//    }
 
     companion object {
         private val TAG = RootSetterActivity::class.java.simpleName
