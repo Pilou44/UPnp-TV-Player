@@ -29,18 +29,10 @@ internal class BrowseViewModel(
     private val getRootUseCase: GetRootUseCase
 ) : ViewModel(), BrowseContract.ViewModel, UpnpServiceConnection.Callback {
 
-    private var currentContainer: UpnpElement? = null
-//    private var root: UpnpElement? = getRootUseCase.execute()?.let {
-//        UpnpElement(UpnpElement.Type.CONTAINER, it.mPath, it.mName, null)
-//    }
     private lateinit var view: BrowseContract.View
-
-    private val upnpServiceConnection = UpnpServiceConnection(
-//        getRootUseCase.execute(),
-//        viewModelScope,
-        this
-    )
-
+    private var lastPlayedElement: StartedVideoElement? = null
+    private var currentContainer: UpnpElement? = null
+    private val upnpServiceConnection = UpnpServiceConnection(this)
     private val requestChannel: Channel<UpnpElement> = Channel()
 
     init {
@@ -67,7 +59,7 @@ internal class BrowseViewModel(
         }
     }
 
-    private suspend fun display(item: UpnpElement, selectedElement: UpnpElement?) {
+    private suspend fun display(item: UpnpElement, selectedElement: Any?) {
         val data = upnpServiceConnection.parseAndUpdate(item)
         val startedMovies = videoRepository.getAllVideo()
         view.displayContent(data.container.name, startedMovies, data.folders, data.movies, selectedElement)
@@ -75,7 +67,6 @@ internal class BrowseViewModel(
     }
 
     override fun goBack(): Boolean {
-//        if (root == null) return false
         val parent = currentContainer?.parent ?: return false
 
         viewModelScope.launch {
@@ -119,6 +110,7 @@ internal class BrowseViewModel(
     }
 
     override fun setLastPlayedElementPath(lastPlayedElement: StartedVideoElement) {
+        this.lastPlayedElement = lastPlayedElement
         viewModelScope.launch {
             videoRepository.writeVideoElement(lastPlayedElement)
         }
@@ -171,12 +163,14 @@ internal class BrowseViewModel(
 
     override fun onServiceConnected() {
         val root = getRootUseCase.execute()
-        if (currentContainer == null && root != null) {
-            Log.i(TAG, "Connect to root ${root.mName}")
-            viewModelScope.launch {
-                val rootContainer = upnpServiceConnection.getRootContainer(root)
-                display(rootContainer, null)
+        viewModelScope.launch {
+            if (currentContainer == null && root != null) {
+                Log.i(TAG, "Connect to root ${root.mName}")
+                currentContainer = upnpServiceConnection.getRootContainer(root)
+                display(currentContainer!!, null)
+                return@launch
             }
+            display(currentContainer!!, lastPlayedElement)
         }
     }
 

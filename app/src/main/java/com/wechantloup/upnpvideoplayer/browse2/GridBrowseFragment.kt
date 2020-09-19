@@ -168,7 +168,7 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
         startedMovies: List<StartedVideoElement>,
         directories: List<UpnpElement>,
         movies: List<UpnpElement>,
-        selectedElement: UpnpElement?
+        selectedElement: Any?
     ) {
         this.title = title
         val adapter = ArrayObjectAdapter(CardPresenter(viewModel))

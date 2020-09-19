@@ -13,7 +13,7 @@ internal interface BrowseContract {
             startedMovies: List<StartedVideoElement>,
             directories: List<UpnpElement>,
             movies: List<UpnpElement>,
-            selectedElement: UpnpElement?
+            selectedElement: Any?
         )
         fun launch(
             playableItem: AppPlayableItem,
