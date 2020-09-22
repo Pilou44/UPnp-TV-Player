@@ -60,9 +60,15 @@ internal class BrowseViewModel(
     }
 
     private suspend fun display(item: UpnpElement, selectedElement: Any?) {
-        val data = upnpServiceConnection.parseAndUpdate(item)
+        val list = upnpServiceConnection.parseAndUpdate(item)
         val startedMovies = videoRepository.getAllVideo()
-        view.displayContent(data.container.name, startedMovies, data.folders, data.movies, selectedElement)
+        view.displayContent(
+            item.name,
+            startedMovies,
+            list.filter { it.type == UpnpElement.Type.CONTAINER },
+            list.filter { it.type == UpnpElement.Type.FILE },
+            selectedElement
+        )
         currentContainer = item
     }
 

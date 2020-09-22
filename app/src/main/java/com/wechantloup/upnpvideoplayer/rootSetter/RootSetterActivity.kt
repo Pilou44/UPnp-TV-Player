@@ -73,8 +73,9 @@ class RootSetterActivity : FragmentActivity(), UpnpServiceConnection.Callback {
         lifecycleScope.launch {
             val position = mAllFiles.indexOf(element)
             val content = upnpServiceConnection.parseAndUpdate(element)
-            mAllFiles.addAll(position + 1, content.folders)
-            adapter.notifyItemRangeInserted(position + 1, content.folders.size)
+            val folders= content.filter { it.type == UpnpElement.Type.CONTAINER }
+            mAllFiles.addAll(position + 1, folders)
+            adapter.notifyItemRangeInserted(position + 1, folders.size)
             selectedElement = element
             adapter.setSelectedElement(position)
         }

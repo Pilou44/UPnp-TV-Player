@@ -10,7 +10,6 @@ import com.bugsnag.android.Bugsnag
 import com.wechantloup.upnp.dataholder.DlnaRoot
 import com.wechantloup.upnp.dataholder.DlnaServer
 import com.wechantloup.upnp.dataholder.PlayableItem
-import com.wechantloup.upnp.dataholder.UpnpContainerData
 import com.wechantloup.upnp.dataholder.UpnpElement
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -169,7 +168,7 @@ class UpnpServiceConnection(private val callback: Callback) : ServiceConnection,
         }
     }
 
-    suspend fun parseAndUpdate(element: UpnpElement): UpnpContainerData {
+    suspend fun parseAndUpdate(element: UpnpElement): List<UpnpElement> {
         val checkedElement = checkService(element)
         return suspendCoroutine { continuation ->
             upnpService?.controlPoint
@@ -200,7 +199,7 @@ class UpnpServiceConnection(private val callback: Callback) : ServiceConnection,
     private fun parseAndUpdate(
         didl: DIDLContent,
         openedElement: UpnpElement
-    ): UpnpContainerData {
+    ): List<UpnpElement> {
         Log.i(TAG, "found " + didl.containers.size + " items.")
         val directories = didl.containers.map {
             UpnpElement(
@@ -223,7 +222,7 @@ class UpnpServiceConnection(private val callback: Callback) : ServiceConnection,
             )
         }
 
-        return UpnpContainerData(openedElement, directories, movies)
+        return directories + movies
     }
 
     suspend fun launch(elementToLaunch: UpnpElement): PlayableItem {
