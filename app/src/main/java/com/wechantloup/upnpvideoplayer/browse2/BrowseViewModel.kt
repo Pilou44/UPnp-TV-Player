@@ -9,7 +9,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wechantloup.core.utils.SHA1
 import com.wechantloup.upnp.UpnpServiceConnection
-import com.wechantloup.upnp.dataholder.PlayableItem
 import com.wechantloup.upnp.dataholder.UpnpElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.AppPlayableItem
 import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
@@ -109,11 +108,22 @@ internal class BrowseViewModel(
     override fun launch(element: UpnpElement, position: Long) {
         if (element.type == UpnpElement.Type.CONTAINER) return
         viewModelScope.launch {
-//            if (element is StartedVideoElement) {
-//                videoRepository.removeVideo(element)
-//            }
-            val item = upnpServiceConnection.launch(element).toAppPlayableItem()
-            view.launch(item, position)
+            val parent = requireNotNull(element.parent)
+            val movies = upnpServiceConnection.parseAndUpdate(parent).filter { it.type == UpnpElement.Type.FILE }
+            val playableMovies = movies.map {
+                val startPosition = if (element.path == it.path) position else 0L
+                StartedVideoElement(
+                    0,
+                    it.path,
+                    it.parent!!.path,
+                    it.name,
+                    startPosition,
+                    0
+                )
+            }
+            val index = movies.indexOfFirst { it.path == element.path }
+            val item = AppPlayableItem(playableMovies, index)
+            view.launch(item)
         }
     }
 
@@ -210,22 +220,6 @@ internal class BrowseViewModel(
         if (longDuration < 0L) return DEFAULT_TIME_TO_CAPTURE
 
         return longDuration / 100L * PERCENT_FOR_CAPTURE
-    }
-
-    private fun PlayableItem.toAppPlayableItem(): AppPlayableItem {
-        return AppPlayableItem(
-            movies.map {
-                StartedVideoElement(
-                    0,
-                    it.path,
-                    it.parent!!.path,
-                    it.name,
-                    0,
-                    0
-                )
-            },
-            startIndex
-        )
     }
 
     private fun Any.getPath(): String = when (this) {

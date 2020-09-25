@@ -9,7 +9,6 @@ import android.util.Log
 import com.bugsnag.android.Bugsnag
 import com.wechantloup.upnp.dataholder.DlnaRoot
 import com.wechantloup.upnp.dataholder.DlnaServer
-import com.wechantloup.upnp.dataholder.PlayableItem
 import com.wechantloup.upnp.dataholder.UpnpElement
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,7 +29,6 @@ import org.fourthline.cling.registry.Registry
 import org.fourthline.cling.support.contentdirectory.callback.Browse
 import org.fourthline.cling.support.model.BrowseFlag
 import org.fourthline.cling.support.model.DIDLContent
-import java.io.FileNotFoundException
 import java.util.Timer
 import java.util.concurrent.TimeoutException
 import kotlin.concurrent.schedule
@@ -66,14 +64,13 @@ class UpnpServiceConnection(private val callback: Callback) : ServiceConnection,
             retrieveService(root)
         }
         val server = DlnaServer(root, remoteService)
-        val rootContainer = UpnpElement(
+        return UpnpElement(
             UpnpElement.Type.CONTAINER,
             root.mPath,
             root.mName,
             null,
             server
         )
-        return rootContainer
     }
 
     private suspend fun retrieveService(root: DlnaRoot): RemoteService =
@@ -83,7 +80,7 @@ class UpnpServiceConnection(private val callback: Callback) : ServiceConnection,
             }
             val service = requireNotNull(upnpService)
             // Get ready for future device advertisements
-            val listener = BrowseRegistryListener(root) { listener: BrowseRegistryListener, dlnaRoot: DlnaRoot, device: Device<*, *, *> ->
+            val listener = BrowseRegistryListener { listener: BrowseRegistryListener, device: Device<*, *, *> ->
                 if (device.isFullyHydrated) {
                     @Suppress("UNCHECKED_CAST")
                     for (remoteService in device.services as Array<RemoteService>) {
@@ -225,58 +222,13 @@ class UpnpServiceConnection(private val callback: Callback) : ServiceConnection,
         return directories + movies
     }
 
-    suspend fun launch(elementToLaunch: UpnpElement): PlayableItem {
-        val element = checkService(elementToLaunch)
-        return suspendCoroutine { continuation ->
-            val parent = requireNotNull(element.parent)
-            if (element.type == UpnpElement.Type.CONTAINER) continuation.resumeWithException(IllegalStateException())
-
-            upnpService?.controlPoint
-                ?.execute(object : Browse(element.server.service, parent.path, BrowseFlag.DIRECT_CHILDREN) {
-                    override fun received(
-                        arg0: ActionInvocation<*>?,
-                        didl: DIDLContent
-                    ) {
-                        Log.i(TAG, "found " + didl.items.size + " items.")
-                        val movies = mutableListOf<UpnpElement>()
-                        didl.items.forEach {
-                            UpnpElement(
-                                UpnpElement.Type.FILE,
-                                it.resources[0].value,
-                                it.title,
-                                parent,
-                                element.server
-                            ).also { element ->
-                                movies.add(element)
-                            }
-                        }
-                        val index = movies.indexOfFirst { it.path == element.path }
-
-                        if (index < 0) continuation.resumeWithException(FileNotFoundException())
-
-                        val item = PlayableItem(movies, index)
-                        continuation.resume(item)
-                    }
-
-                    override fun updateStatus(status: Status) {}
-                    override fun failure(arg0: ActionInvocation<*>?, arg1: UpnpResponse, arg2: String) {
-                        continuation.resumeWithException(UpnpException(arg1))
-                    }
-                })
-        }
-    }
-
     interface Callback {
-//        fun onErrorConnectingServer()
         fun onServiceConnected()
-//        fun onServerConnected(rootContainer: UpnpElement)
     }
 
     private class BrowseRegistryListener(
-        private val root: DlnaRoot,
-        private val onDeviceAdded: (BrowseRegistryListener, DlnaRoot, Device<*, *, *>) -> Unit
-    ) :
-        DefaultRegistryListener() {
+        private val onDeviceAdded: (BrowseRegistryListener, Device<*, *, *>) -> Unit
+    ) : DefaultRegistryListener() {
 
         override fun remoteDeviceDiscoveryStarted(registry: Registry, device: RemoteDevice) {
             // Nothing to do
@@ -287,7 +239,7 @@ class UpnpServiceConnection(private val callback: Callback) : ServiceConnection,
         }
 
         override fun remoteDeviceAdded(registry: Registry, device: RemoteDevice) {
-            onDeviceAdded(this, root, device)
+            onDeviceAdded(this, device)
         }
 
         override fun remoteDeviceRemoved(registry: Registry, device: RemoteDevice) {

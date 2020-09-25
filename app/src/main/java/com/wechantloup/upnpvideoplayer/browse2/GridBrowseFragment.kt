@@ -142,14 +142,13 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
         viewModel.launch(element)
     }
 
-    override fun launch(playableItem: AppPlayableItem, position: Long) {
+    override fun launch(playableItem: AppPlayableItem) {
         playableItem.apply {
             Log.i(TAG, "Launch ${movies[startIndex].name}")
             val arrayList = ArrayList<String>().apply { addAll(movies.map { it.serialize() }) }
             val intent = Intent(activity, VideoPlayerActivity::class.java)
             intent.putExtra(VideoPlayerActivity.EXTRA_URLS, arrayList)
             intent.putExtra(VideoPlayerActivity.EXTRA_INDEX, startIndex)
-            intent.putExtra(VideoPlayerActivity.EXTRA_POSITION, position)
             startActivityForResult(intent, REQUEST_MEDIA_PLAYER)
         }
     }

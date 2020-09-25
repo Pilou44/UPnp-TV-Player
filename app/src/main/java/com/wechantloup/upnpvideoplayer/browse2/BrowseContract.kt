@@ -15,10 +15,7 @@ internal interface BrowseContract {
             movies: List<UpnpElement>,
             selectedElement: Any?
         )
-        fun launch(
-            playableItem: AppPlayableItem,
-            position: Long
-        )
+        fun launch(playableItem: AppPlayableItem)
         fun refreshItem(item: Any)
     }
 

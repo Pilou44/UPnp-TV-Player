@@ -51,7 +51,6 @@ class VideoPlayerActivity : AppCompatActivity(), ControlsOverlayListener {
         controls = findViewById(R.id.controls)
         list = intent.getStringArrayListExtra(EXTRA_URLS).map { it.deserialize<StartedVideoElement>() }
         index = intent.getIntExtra(EXTRA_INDEX, 0) - 1
-        position = intent.getLongExtra(EXTRA_POSITION, 0L)
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
@@ -203,6 +202,7 @@ class VideoPlayerActivity : AppCompatActivity(), ControlsOverlayListener {
     override operator fun next() {
         index = (index + 1) % list!!.size
         current = list!![index]
+        position = current!!.position
         playCurrent()
     }
 
@@ -241,7 +241,6 @@ class VideoPlayerActivity : AppCompatActivity(), ControlsOverlayListener {
         private const val ENABLE_SUBTITLES = true
         const val EXTRA_URLS = "urls"
         const val EXTRA_INDEX = "index"
-        const val EXTRA_POSITION = "position"
         private val TAG = VideoPlayerActivity::class.java.simpleName
     }
 }
