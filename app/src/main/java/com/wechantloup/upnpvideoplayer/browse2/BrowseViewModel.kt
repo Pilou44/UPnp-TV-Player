@@ -7,6 +7,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.wechantloup.core.utils.SHA1
 import com.wechantloup.upnp.UpnpServiceConnection
 import com.wechantloup.upnp.dataholder.PlayableItem
 import com.wechantloup.upnp.dataholder.UpnpElement
@@ -21,6 +22,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.lang.IllegalStateException
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class BrowseViewModel(
@@ -33,7 +35,7 @@ internal class BrowseViewModel(
     private var lastPlayedElement: StartedVideoElement? = null
     private var currentContainer: UpnpElement? = null
     private val upnpServiceConnection = UpnpServiceConnection(this)
-    private val requestChannel: Channel<UpnpElement> = Channel()
+    private val requestChannel: Channel<Any> = Channel()
 
     init {
         viewModelScope.launch {
@@ -127,45 +129,31 @@ internal class BrowseViewModel(
         currentContainer = null
     }
 
-    override fun getThumbnail(item: UpnpElement): Uri? {
-        val uri: Uri? = thumbnailRepository.getElementThumbnail(item)
+    override fun getThumbnail(item: Any): Uri? {
+        val sha1 = extractSha1(item) ?: return null
+        val uri: Uri? = thumbnailRepository.getElementThumbnail(sha1)
         uri?.let { return it }
         viewModelScope.launch {
             requestChannel.send(item)
         }
-        Log.i(TAG, "Return null for ${item.name}")
         return null
     }
 
-//    override fun setNewContent(
-//        title: String,
-//        directories: List<com.wechantloup.upnp.dataholder.ContainerElement>,
-//        movies: List<com.wechantloup.upnp.dataholder.BrowsableVideoElement>,
-//        selectedElement: com.wechantloup.upnp.dataholder.BrowsableElement?
-//    ) {
-//        viewModelScope.launch {
-//            val startedMovies = videoRepository.getAllVideo()
-//            view.displayContent(title, startedMovies, directories, movies, selectedElement)
-//        }
-//    }
+    private fun extractSha1(item: Any): String? {
+        val itemName = when (item) {
+            is UpnpElement -> {
+                if (item.type == UpnpElement.Type.FILE) {
+                    item.path
+                } else {
+                    item.name
+                }
+            }
+            is StartedVideoElement -> item.path
+            else -> null
+        } ?: return null
 
-//    override fun launch(movies: ArrayList<VideoElement.ParcelableElement>, index: Int, position: Long) {
-//        view.launch(movies, index, position)
-//    }
-
-//    override fun onReady(rootContainer: UpnpElement) {
-//        root?.let {
-//            viewModelScope.launch {
-//                val data = upnpServiceConnection.parseAndUpdate(it)
-//                view.displayContent(data.container.name, emptyList(), data.folders, data.movies, null)
-//                currentContainer = it
-//            }
-//        }
-//    }
-
-//    override fun onErrorConnectingServer() {
-//        TODO("Not yet implemented")
-//    }
+        return SHA1(itemName)
+    }
 
     override fun onServiceConnected() {
         val root = getRootUseCase.execute()
@@ -180,37 +168,34 @@ internal class BrowseViewModel(
         }
     }
 
-//    override fun onServerConnected(rootContainer: UpnpElement) {
-//        Log.i(TAG, "Parse root container ${rootContainer.name}")
-//        viewModelScope.launch {
-//            display(rootContainer, null)
-//        }
-//    }
-
-    private suspend fun retrieveThumbnail(element: UpnpElement) {
-        val uri: Uri? = thumbnailRepository.getElementThumbnail(element)
+    private suspend fun retrieveThumbnail(element: Any) {
+        val sha1 = extractSha1(element) ?: return
+        val uri: Uri? = thumbnailRepository.getElementThumbnail(sha1)
         uri?.let { return }
+        val path = element.getPath()
+        val name = element.getName()
 
         var bitmap: Bitmap? = null
-        Log.i(TAG, "Launch coroutine for ${element.name}")
+        Log.i(TAG, "Launch retrieveThumbnail coroutine for $name")
         withContext(Dispatchers.IO) {
             val mmr = MediaMetadataRetriever()
             try {
-                mmr.setDataSource(element.path, HashMap<String, String>())
+                mmr.setDataSource(path, HashMap<String, String>())
                 val duration: String? = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
                 val timeToCatch = extractTimeToCapture(duration)
                 bitmap = mmr.getFrameAtTime(timeToCatch * 1000, MediaMetadataRetriever.OPTION_CLOSEST)
-                Log.i("MMR", "For item ${element.name}: duration = $duration, bitmap is null: ${bitmap == null}")
+                Log.i(TAG, "For item $name: duration = $duration, bitmap at $timeToCatch is null: ${bitmap == null}")
             } catch (e: RuntimeException) {
                 e.printStackTrace()
             } finally {
                 mmr.release()
             }
             bitmap?.let {
-                thumbnailRepository.writeElementThumbnail(it, element)
+                thumbnailRepository.writeElementThumbnail(it, sha1)
                 view.refreshItem(element)
             }
         }
+        Log.i(TAG, "End of retrieveThumbnail coroutine for $name")
     }
 
     private fun extractTimeToCapture(duration: String?): Long {
@@ -224,7 +209,7 @@ internal class BrowseViewModel(
         }
         if (longDuration < 0L) return DEFAULT_TIME_TO_CAPTURE
 
-        return longDuration * 100L / PERCENT_FOR_CAPTURE
+        return longDuration / 100L * PERCENT_FOR_CAPTURE
     }
 
     private fun PlayableItem.toAppPlayableItem(): AppPlayableItem {
@@ -242,6 +227,18 @@ internal class BrowseViewModel(
             startIndex
         )
     }
+
+    private fun Any.getPath(): String = when (this) {
+            is UpnpElement -> path
+            is StartedVideoElement -> path
+            else -> throw IllegalStateException()
+        }
+
+    private fun Any.getName(): String = when (this) {
+            is UpnpElement -> name
+            is StartedVideoElement -> name
+            else -> throw IllegalStateException()
+        }
 
     companion object {
         private val TAG = BrowseViewModel::class.java.simpleName

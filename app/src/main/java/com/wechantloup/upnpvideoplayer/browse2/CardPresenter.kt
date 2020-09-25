@@ -52,6 +52,14 @@ internal class CardPresenter(private val viewModel: BrowseContract.ViewModel) : 
                 updateCardBackgroundColor(cardView, empty = false, selected = false)
 
                 cardView.setTitle(item.name)
+                val uri = viewModel.getThumbnail(item)
+                uri?.let {
+                    Glide.with(viewHolder.view.context)
+                        .load(uri)
+                        .centerCrop()
+                        .error(mDefaultCardImage)
+                        .into(cardView.getMainImageView())
+                }
             }
             is UpnpElement -> {
                 cardView.isFocusable = true

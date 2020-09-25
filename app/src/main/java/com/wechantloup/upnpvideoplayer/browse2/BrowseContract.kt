@@ -28,7 +28,7 @@ internal interface BrowseContract {
         fun onViewPaused(context: Context)
         fun parse(item: UpnpElement)
         fun goBack(): Boolean
-        fun getThumbnail(item: UpnpElement): Uri?
+        fun getThumbnail(item: Any): Uri?
         fun launch(element: UpnpElement, position: Long = 0)
         fun launch(element: StartedVideoElement, position: Long = 0)
         fun setLastPlayedElementPath(lastPlayedElement: StartedVideoElement)
