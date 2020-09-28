@@ -39,10 +39,6 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".MainActivity" />
-        <activity android:name=".DetailsActivity" />
-        <activity android:name=".PlaybackActivity" />
-        <activity android:name=".BrowseErrorActivity" />
         <activity android:name="com.wechantloup.upnpvideoplayer.rootSetter.RootSetterActivity" />
         <activity android:name=".videoPlayer.VideoPlayerActivity"
             android:theme="@style/AppCompatTheme" />

@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.preference.PreferenceManager
 import android.widget.Button
 import android.widget.CheckBox
-import com.wechantloup.upnpvideoplayer.MainActivity
 import com.wechantloup.upnpvideoplayer.R
 import com.wechantloup.upnpvideoplayer.browse2.SuperBrowseActivity
 import com.wechantloup.upnpvideoplayer.rootSetter.RootSetterActivity
