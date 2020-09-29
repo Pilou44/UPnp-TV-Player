@@ -21,6 +21,7 @@ import com.wechantloup.upnpvideoplayer.data.dataholder.ParametersElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
 import com.wechantloup.upnpvideoplayer.dialog.DialogFragment
 import com.wechantloup.upnpvideoplayer.dialog.DialogFragmentActivity
+import com.wechantloup.upnpvideoplayer.imageSearch.ImageSearchActivity
 import com.wechantloup.upnpvideoplayer.main.MainActivity
 import com.wechantloup.upnpvideoplayer.rootSetter.RootSetterActivity
 import com.wechantloup.upnpvideoplayer.videoPlayer.VideoPlayerActivity
@@ -28,6 +29,7 @@ import com.wechantloup.upnpvideoplayer.widgets.BrowseTitleView
 
 class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
 
+    private var selectedElement: Any? = null
     private lateinit var viewModel: BrowseContract.ViewModel
     private lateinit var browsingAdapter: ArrayObjectAdapter
 
@@ -97,6 +99,7 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
         titleView = BrowseTitleView(requireContext())
 
         setOnItemViewClickedListener { _, item, _, _ -> onItemClicked(item) }
+        setOnItemViewSelectedListener { _, item, _, _ -> selectedElement = item }
     }
 
     private fun onItemClicked(item: Any) {
@@ -109,11 +112,11 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
                 }
             }
             is StartedVideoElement -> launchAndContinue(item)
-            is ParametersElement -> launcParameter(item)
+            is ParametersElement -> launchParameter(item)
         }
     }
 
-    private fun launcParameter(item: ParametersElement) {
+    private fun launchParameter(item: ParametersElement) {
         startActivityForResult(item.intent, item.requestCode)
     }
 
@@ -228,8 +231,20 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
     }
 
     fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        if (keyCode != KeyEvent.KEYCODE_MENU) return false
-        // ToDo
+        if (keyCode == KeyEvent.KEYCODE_MENU) {
+            val element = selectedElement ?: return false
+
+            val name = when (element) {
+                is UpnpElement -> element.name
+                is StartedVideoElement -> element.name
+                else -> return false
+            }
+
+            val intent = Intent(context, ImageSearchActivity::class.java)
+            intent.putExtra(ImageSearchActivity.ARG_SEARCH, name)
+            startActivityForResult(intent, REQUEST_IMAGE_SEARCH)
+            return true
+        }
         return false
     }
 
@@ -247,5 +262,6 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
         private const val REQUEST_MEDIA_PLAYER = 2911
         private const val REQUEST_SETTING_DLNA_ROOT = 1507
         private const val REQUEST_SETTING_PLAYER_OPTIONS = 410
+        private const val REQUEST_IMAGE_SEARCH = 2702
     }
 }
