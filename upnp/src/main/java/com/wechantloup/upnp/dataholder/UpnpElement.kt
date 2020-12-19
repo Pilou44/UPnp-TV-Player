@@ -5,12 +5,9 @@ data class UpnpElement(
     val path: String,
     val name: String,
     val parent: UpnpElement?,
-    val server: DlnaServer
+    val udn: String,
+    val location: String
 ) {
-    override fun equals(other: Any?): Boolean {
-        return other is UpnpElement && path == other.path && server.info.mUrl == other.server.info.mUrl
-    }
-
     enum class Type {
         FILE,
         CONTAINER

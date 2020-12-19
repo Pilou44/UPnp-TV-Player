@@ -8,7 +8,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wechantloup.core.utils.SHA1
-import com.wechantloup.upnp.UpnpServiceConnection
+import com.wechantloup.upnp.ControlPointManager
 import com.wechantloup.upnp.dataholder.UpnpElement
 import com.wechantloup.upnpvideoplayer.data.dataholder.AppPlayableItem
 import com.wechantloup.upnpvideoplayer.data.dataholder.StartedVideoElement
@@ -28,18 +28,19 @@ internal class BrowseViewModel(
     private val videoRepository: VideoRepository,
     private val thumbnailRepository: ThumbnailRepository,
     private val getRootUseCase: GetRootUseCase
-) : ViewModel(), BrowseContract.ViewModel, UpnpServiceConnection.Callback {
+) : ViewModel(), BrowseContract.ViewModel {
 
     private lateinit var view: BrowseContract.View
     private var lastPlayedElement: StartedVideoElement? = null
     private var currentContainer: UpnpElement? = null
-    private val upnpServiceConnection = UpnpServiceConnection(this)
     private val requestChannel: Channel<Any> = Channel()
+    private val controlPointManager = ControlPointManager()
 
     init {
         viewModelScope.launch {
             requestChannel.consumeEach { retrieveThumbnail(it) }
         }
+        displayFiles()
     }
 
     override fun setView(view: BrowseContract.View) {
@@ -47,11 +48,11 @@ internal class BrowseViewModel(
     }
 
     override fun onViewResumed(context: Context) {
-        upnpServiceConnection.bind(context)
+//        upnpServiceConnection.bind(context)
     }
 
     override fun onViewPaused(context: Context) {
-        upnpServiceConnection.unbind(context)
+//        upnpServiceConnection.unbind(context)
     }
 
     override fun parse(item: UpnpElement) {
@@ -61,7 +62,7 @@ internal class BrowseViewModel(
     }
 
     private suspend fun display(item: UpnpElement?, selectedElement: Any?) {
-        val list = item?.let { upnpServiceConnection.parseAndUpdate(it) } ?: emptyList()
+        val list = item?.let { controlPointManager.parseAndUpdate(it) } ?: emptyList()
         val startedMovies = videoRepository.getAllVideo()
         view.displayContent(
             item?.name ?: "",
@@ -87,20 +88,21 @@ internal class BrowseViewModel(
             videoRepository.removeVideo(element)
         }
         val current = currentContainer ?: return
-        val server = current.server
         val parent = UpnpElement(
             UpnpElement.Type.CONTAINER,
             element.containerId,
             "",
             null,
-            server
+            current.udn,
+            current.location
         )
         val upnpElement = UpnpElement(
             UpnpElement.Type.FILE,
             element.path,
             element.name,
             parent,
-            server
+            current.udn,
+            current.location
         )
         launch(upnpElement, position)
     }
@@ -109,7 +111,7 @@ internal class BrowseViewModel(
         if (element.type == UpnpElement.Type.CONTAINER) return
         viewModelScope.launch {
             val parent = requireNotNull(element.parent)
-            val movies = upnpServiceConnection.parseAndUpdate(parent).filter { it.type == UpnpElement.Type.FILE }
+            val movies = controlPointManager.parseAndUpdate(parent).filter { it.type == UpnpElement.Type.FILE }
             val playableMovies = movies.map {
                 val startPosition = if (element.path == it.path) position else 0L
                 StartedVideoElement(
@@ -132,11 +134,13 @@ internal class BrowseViewModel(
         viewModelScope.launch {
             videoRepository.writeVideoElement(lastPlayedElement)
         }
+        displayFiles()
     }
 
     override fun resetRoot() {
         Log.i(TAG, "Reset root")
         currentContainer = null
+        displayFiles()
     }
 
     override fun getThumbnail(item: Any): Uri? {
@@ -165,7 +169,7 @@ internal class BrowseViewModel(
         return SHA1(itemName)
     }
 
-    override fun onServiceConnected() {
+    private fun displayFiles() {
         val root = getRootUseCase.execute()
 
         viewModelScope.launch {
@@ -173,9 +177,7 @@ internal class BrowseViewModel(
                 display(null, null)
                 return@launch
             } else if (currentContainer == null) {
-                Log.i(TAG, "Connect to root ${root.mName}")
-                currentContainer = upnpServiceConnection.getRootContainer(root)
-                display(currentContainer, null)
+                display(root, null)
                 return@launch
             }
             display(currentContainer!!, lastPlayedElement)
