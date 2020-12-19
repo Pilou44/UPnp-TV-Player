@@ -231,7 +231,7 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
     }
 
     fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        if (keyCode == KeyEvent.KEYCODE_MENU) {
+        /*if (keyCode == KeyEvent.KEYCODE_MENU) {
             val element = selectedElement ?: return false
 
             val name = when (element) {
@@ -244,7 +244,7 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
             intent.putExtra(ImageSearchActivity.ARG_SEARCH, name)
             startActivityForResult(intent, REQUEST_IMAGE_SEARCH)
             return true
-        }
+        }*/
         return false
     }
 
