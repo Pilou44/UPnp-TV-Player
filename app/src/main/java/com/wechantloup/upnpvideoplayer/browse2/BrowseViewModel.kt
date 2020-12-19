@@ -60,11 +60,11 @@ internal class BrowseViewModel(
         }
     }
 
-    private suspend fun display(item: UpnpElement, selectedElement: Any?) {
-        val list = upnpServiceConnection.parseAndUpdate(item)
+    private suspend fun display(item: UpnpElement?, selectedElement: Any?) {
+        val list = item?.let { upnpServiceConnection.parseAndUpdate(it) } ?: emptyList()
         val startedMovies = videoRepository.getAllVideo()
         view.displayContent(
-            item.name,
+            item?.name ?: "",
             startedMovies,
             list.filter { it.type == UpnpElement.Type.CONTAINER },
             list.filter { it.type == UpnpElement.Type.FILE },
@@ -167,11 +167,15 @@ internal class BrowseViewModel(
 
     override fun onServiceConnected() {
         val root = getRootUseCase.execute()
+
         viewModelScope.launch {
-            if (currentContainer == null && root != null) {
+            if (root == null) {
+                display(null, null)
+                return@launch
+            } else if (currentContainer == null) {
                 Log.i(TAG, "Connect to root ${root.mName}")
                 currentContainer = upnpServiceConnection.getRootContainer(root)
-                display(currentContainer!!, null)
+                display(currentContainer, null)
                 return@launch
             }
             display(currentContainer!!, lastPlayedElement)
