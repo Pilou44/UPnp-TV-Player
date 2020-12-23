@@ -15,7 +15,7 @@ class RootRepository(context: Context) {
 
     fun setRoot(newRoot: UpnpElement) {
         root = newRoot.copy(parent = null)
-        preferences.setString(KEY_ROOT, root.serialize())
+        preferences.setString(KEY_ROOT, requireNotNull(root).serialize())
     }
 
     companion object {
