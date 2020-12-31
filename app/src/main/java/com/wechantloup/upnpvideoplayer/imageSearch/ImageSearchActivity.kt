@@ -1,26 +1,25 @@
 package com.wechantloup.upnpvideoplayer.imageSearch
 
 import android.os.Bundle
-import android.util.Log
+import android.widget.EditText
+import android.widget.TextView
 import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.lifecycleScope
 import com.wechantloup.upnpvideoplayer.R
-import com.wechantloup.upnpvideoplayer.data.repository.ImageSearchRepository
 
 class ImageSearchActivity : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        Log.i("TEST", "onCreate")
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_image_search)
 
+        val searchEditText = findViewById<TextView>(R.id.search_edit_text)
+
         val search = requireNotNull(intent.getStringExtra(ARG_SEARCH))
 
-        val repository = ImageSearchRepository()
+        searchEditText.setText(search)
 
-        lifecycleScope.launchWhenCreated {
-            val images = repository.getImages(search)
-        }
+        val fragment = supportFragmentManager.findFragmentById(R.id.image_search_fragment) as? ImageSearchFragment
+        fragment?.search(search)
     }
 
     companion object {

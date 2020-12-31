@@ -9,6 +9,7 @@ import android.widget.TextView
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.constraintlayout.widget.ConstraintLayout
+import com.bumptech.glide.Glide
 import com.wechantloup.upnpvideoplayer.R
 
 open class BrowsingCardView(context: Context) : ConstraintLayout(context) {
@@ -41,6 +42,14 @@ open class BrowsingCardView(context: Context) : ConstraintLayout(context) {
     fun setMainImage(image: Drawable?) {
         val imageView = findViewById<ImageView>(R.id.image)
         imageView.setImageDrawable(image)
+    }
+
+    fun setMainImage(imageUrl: String) {
+        val imageView = findViewById<ImageView>(R.id.image)
+        Glide.with(imageView.context)
+            .load(imageUrl)
+            .centerCrop()
+            .into(imageView)
     }
 
     fun getMainImageView(): ImageView {

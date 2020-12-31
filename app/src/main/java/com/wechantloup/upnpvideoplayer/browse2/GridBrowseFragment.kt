@@ -231,7 +231,7 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
     }
 
     fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        /*if (keyCode == KeyEvent.KEYCODE_MENU) {
+        if (keyCode == KeyEvent.KEYCODE_MENU) {
             val element = selectedElement ?: return false
 
             val name = when (element) {
@@ -244,7 +244,7 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
             intent.putExtra(ImageSearchActivity.ARG_SEARCH, name)
             startActivityForResult(intent, REQUEST_IMAGE_SEARCH)
             return true
-        }*/
+        }
         return false
     }
 
@@ -257,7 +257,8 @@ class GridBrowseFragment : VerticalGridSupportFragment(), BrowseContract.View {
     }
 
     companion object {
-        private val TAG = GridBrowseFragment::class.java.simpleName
+        private const val TAG = "GridBrowseFragment"
+
         private const val NUM_COLUMNS = 5
         private const val REQUEST_MEDIA_PLAYER = 2911
         private const val REQUEST_SETTING_DLNA_ROOT = 1507

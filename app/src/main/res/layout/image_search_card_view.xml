@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:lb="http://schemas.android.com/apk/res-auto">
+
+    <ImageView
+        android:id="@+id/image"
+        android:layout_width="156.5dp"
+        android:layout_height="88dp"
+        android:scaleType="fitCenter"
+        lb:layout_constraintBottom_toTopOf="@id/title"
+        lb:layout_constraintEnd_toEndOf="parent"
+        lb:layout_constraintStart_toStartOf="parent"
+        lb:layout_constraintTop_toTopOf="parent" />
+
+</merge>
